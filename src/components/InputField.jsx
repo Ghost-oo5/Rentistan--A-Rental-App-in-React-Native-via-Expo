@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   fieldButton: {
-    color: '#AD40AF',
+    color: '#00ADEF',
     fontWeight: '700',
   },
 });

@@ -11,7 +11,7 @@ import {
 
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import Loginpng from '../assets/images/misc/login.png';
+import Loginpng from '../assets/Rentistan-Logo-blue.png';
 import Googlepng from '../assets/images/misc/google.png';
 import Facebookpng from '../assets/images/misc/facebook.png';
 import Twitterpng from '../assets/images/misc/twitter.png';
@@ -29,10 +29,10 @@ export default function LoginForm ({ navigation }) {
           />
         </View>
 
-        <Text style={styles.title}>Login</Text>
+        {/* <Text style={styles.title}>Login</Text> */}
 
         <InputField
-          label={'Email ID'}
+          label={'Email ID:'}
           icon={
             <MaterialIcons
               name="alternate-email"
@@ -45,7 +45,7 @@ export default function LoginForm ({ navigation }) {
         />
 
         <InputField
-          label={'Password'}
+          label={'Password:'}
           icon={
             <Ionicons
               name="lock-closed-outline"
@@ -59,7 +59,7 @@ export default function LoginForm ({ navigation }) {
           fieldButtonFunction={() => { }}
         />
 
-        <CustomButton label={"Login"} onPress={() => { }} />
+        <CustomButton label={"Login"} onPress={() =>navigation.navigate('Home')}/>
 
         <Text style={styles.orText}>
           Or, login with ...
@@ -85,7 +85,7 @@ export default function LoginForm ({ navigation }) {
 
         <View style={styles.registerContainer}>
           <Text style={styles.registerText}>New to the app?</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+          <TouchableOpacity onPress={() => navigation.navigate('RegisterScreen')}>
             <Text style={styles.registerLink}> Register</Text>
           </TouchableOpacity>
         </View>
@@ -106,17 +106,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    transform: [{ rotate: '-5deg' }],
     width: 200,
     height: 200,
   },
-  title: {
-    fontFamily: 'Roboto-Medium',
-    fontSize: 28,
-    fontWeight: '500',
-    color: '#333',
-    marginBottom: 30,
-  },
+  // title: {
+  //   fontFamily: 'Roboto-Medium',
+  //   fontSize: 28,
+  //   fontWeight: '500',
+  //   color: '#333',
+  //   marginBottom: 30,
+  //   textAlign: 'center',
+  // },
   icon: {
     marginRight: 5,
   },
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   registerLink: {
-    color: '#AD40AF',
+    color: '#00ADEF',
     fontWeight: '700',
   },
 });
