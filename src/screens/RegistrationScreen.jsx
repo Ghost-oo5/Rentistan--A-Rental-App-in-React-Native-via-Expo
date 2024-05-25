@@ -11,7 +11,6 @@ const firebaseConfig = {
   messagingSenderId: "555430383847",
   appId: "1:555430383847:web:dff9b7e3d074e975e8d242"
 };
-
 const app = initializeApp(firebaseConfig);
 
 const AuthScreen = ({ email, setEmail, password, setPassword, isLogin, setIsLogin, handleAuthentication }) => {
@@ -56,7 +55,7 @@ const AuthenticatedScreen = ({ user, handleAuthentication }) => {
   );
 };
 
-export default function RegistrationScreen() {
+export default function RegistrationScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [user, setUser] = useState(null); // Track user authentication state
@@ -66,6 +65,10 @@ export default function RegistrationScreen() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
+      if (user) {
+        // Navigate to Home screen if user is already logged in
+        navigation.navigate('Home');
+      }
     });
 
     return () => unsubscribe();
@@ -76,6 +79,7 @@ export default function RegistrationScreen() {
       if (user) {
         // If user is already authenticated, log out
         console.log('User logged out successfully!');
+        alert('User logged out successfully!');
         await signOut(auth);
       } else {
         // Sign in or sign up
@@ -83,11 +87,15 @@ export default function RegistrationScreen() {
           // Sign in
           await signInWithEmailAndPassword(auth, email, password);
           console.log('User signed in successfully!');
+          alert('User signed in successfully!');
         } else {
           // Sign up
           await createUserWithEmailAndPassword(auth, email, password);
           console.log('User created successfully!');
+          alert('User created successfully!');
         }
+        // Navigate to Home screen after successful login or registration
+        navigation.navigate('Home');
       }
     } catch (error) {
       console.error('Authentication error:', error.message);
@@ -135,6 +143,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     marginBottom: 16,
     textAlign: 'center',
+    fontWeight: 'bold',
+    color: '#3498db',
   },
   input: {
     height: 40,
