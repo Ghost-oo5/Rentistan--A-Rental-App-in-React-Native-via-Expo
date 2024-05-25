@@ -10,22 +10,24 @@ export default function WelcomeScreen({ navigation }) {
         <Text style={styles.TitleText}>Rentistan</Text>
         <Text style={styles.H2Text}>Where Nalla Berozgar can have his own home</Text>
       </View>
-        <Image source={favicon} style={styles.logoImage} />
-
+      <Image source={favicon} style={styles.logoImage} />
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.navigate('LoginForm')}>
+        onPress={() => navigation.navigate('RegistrationScreen')}
+      >
         <Text style={styles.buttonText}>Let's Begin</Text>
-        <MaterialIcons name="arrow-forward-ios" size={22} color="#fff" />
+        <Text>
+          <MaterialIcons name="arrow-forward-ios" size={22} color="#fff" />
+        </Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'space-between', // Place items with space between them
+    justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#fff',
   },
@@ -38,6 +40,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 30,
     color: '#20315f',
+  },
+  H2Text: {
+    marginTop: 10,
+    fontSize: 18,
+    color: '#20315f',
+    textAlign: 'center',
   },
   logoImage: {
     marginTop: 20,
@@ -53,7 +61,8 @@ const styles = StyleSheet.create({
     marginBottom: 50,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    shadowOffset: '8px 8px',
+    alignItems: 'center',
+    shadowOffset: { width: 8, height: 8 },
   },
   buttonText: {
     color: 'white',

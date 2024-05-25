@@ -1,14 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   SafeAreaView,
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
-  Image, // Import Image component
+  Image,
+  Alert,
 } from 'react-native';
-
+import axios from 'axios';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Loginpng from '../assets/Rentistan-Logo-blue.png';
@@ -18,74 +18,75 @@ import Twitterpng from '../assets/images/misc/twitter.png';
 import CustomButton from '../components/CustomButton';
 import InputField from '../components/InputField';
 
-export default function LoginForm ({ navigation }) {
+export default function LoginForm({ navigation }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = async () => {
+    try {
+      const response = await axios.post('http://your-backend-url/login', {
+        email,
+        password,
+      });
+
+      if (response.data.success) {
+        navigation.navigate('Home');
+      } else {
+        Alert.alert('Error', response.data.message);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Something went wrong');
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.logoContainer}>
-          <Image
-            source={Loginpng}
-            style={styles.logo}
-          />
+          <Image source={Loginpng} style={styles.logo} />
         </View>
-
-        {/* <Text style={styles.title}>Login</Text> */}
 
         <InputField
           label={'Email ID:'}
           icon={
-            <MaterialIcons
-              name="alternate-email"
-              size={20}
-              color="#666"
-              style={styles.icon}
-            />
+            <MaterialIcons name="alternate-email" size={20} color="#666" style={styles.icon} />
           }
           keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
         />
 
         <InputField
           label={'Password:'}
           icon={
-            <Ionicons
-              name="lock-closed-outline"
-              size={20}
-              color="#666"
-              style={styles.icon}
-            />
+            <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.icon} />
           }
           inputType="password"
+          value={password}
+          onChangeText={setPassword}
           fieldButtonLabel={"Forgot?"}
-          fieldButtonFunction={() => { }}
+          fieldButtonFunction={() => {}}
         />
 
-        <CustomButton label={"Login"} onPress={() =>navigation.navigate('Home')}/>
+        <CustomButton label={"Login"} onPress={handleLogin} />
 
-        <Text style={styles.orText}>
-          Or, login with ...
-        </Text>
+        <Text style={styles.orText}>Or, login with ...</Text>
 
         <View style={styles.socialButtonsContainer}>
-          <TouchableOpacity
-            onPress={() => { }}
-            style={styles.socialButton}>
-            <Image source={Googlepng} style={{height: 24, width: 24}} />
+          <TouchableOpacity onPress={() => {}} style={styles.socialButton}>
+            <Image source={Googlepng} style={styles.socialButtonIcon} />
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => { }}
-            style={styles.socialButton}>
-            <Image source={Facebookpng} style={{height: 24, width: 24}} />
+          <TouchableOpacity onPress={() => {}} style={styles.socialButton}>
+            <Image source={Facebookpng} style={styles.socialButtonIcon} />
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => { }}
-            style={styles.socialButton}>
-            <Image source={Twitterpng} style={{height: 24, width: 24}} />
+          <TouchableOpacity onPress={() => {}} style={styles.socialButton}>
+            <Image source={Twitterpng} style={styles.socialButtonIcon} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.registerContainer}>
           <Text style={styles.registerText}>New to the app?</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('RegisterScreen')}>
+          <TouchableOpacity onPress={() => navigation.navigate('RegistrationScreen')}>
             <Text style={styles.registerLink}> Register</Text>
           </TouchableOpacity>
         </View>
@@ -109,14 +110,6 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
   },
-  // title: {
-  //   fontFamily: 'Roboto-Medium',
-  //   fontSize: 28,
-  //   fontWeight: '500',
-  //   color: '#333',
-  //   marginBottom: 30,
-  //   textAlign: 'center',
-  // },
   icon: {
     marginRight: 5,
   },
@@ -136,6 +129,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 30,
     paddingVertical: 10,
+  },
+  socialButtonIcon: {
+    height: 24,
+    width: 24,
   },
   registerContainer: {
     flexDirection: 'row',
