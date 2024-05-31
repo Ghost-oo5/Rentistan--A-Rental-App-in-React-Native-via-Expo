@@ -3,7 +3,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import Menu from './src/screens/Menu';
 import RegistrationScreen from './src/screens/RegistrationScreen';
@@ -25,7 +24,7 @@ const Tab = createBottomTabNavigator();
 function MenuStack() {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="Menu" component={Menu} options={{ title: 'Menu' }} />
+      <Stack.Screen name="Menu" component={Menu} />
       <Stack.Screen name="SearchResult" component={SearchResult} />
       <Stack.Screen name="Filter" component={Filter} />
       <Stack.Screen name="ListingDetails" component={ListingDetails} />

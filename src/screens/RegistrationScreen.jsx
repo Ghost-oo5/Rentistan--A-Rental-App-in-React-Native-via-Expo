@@ -116,61 +116,79 @@ export default function RegistrationScreen({ navigation }) {
   );
 }
 
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Register</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Name"
+        placeholderTextColor="#999"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        placeholderTextColor="#999"
+        keyboardType="email-address"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        placeholderTextColor="#999"
+        secureTextEntry
+      />
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('MenuMain')}
+      >
+        <Text style={styles.buttonText}>Sign Up</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => navigation.navigate('Welcome')}>
+        <Text style={styles.link}>Back to Welcome</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#f0f0f0',
-  },
-  authContainer: {
-    width: '80%',
-    maxWidth: 400,
+    padding: 20,
     backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 8,
-    elevation: 3,
   },
   title: {
-    fontSize: 24,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  input: {
-    height: 40,
-    borderColor: '#ddd',
-    borderWidth: 1,
-    marginBottom: 16,
-    padding: 8,
-    borderRadius: 4,
-  },
-  buttonContainer: {
-    marginBottom: 16,
-  },
-  toggleText: {
-    color: '#3498db',
-    textAlign: 'center',
-  },
-  bottomContainer: {
-    marginTop: 20,
-  },
-  emailText: {
-    fontSize: 18,
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#00ADEF',
     textAlign: 'center',
     marginBottom: 20,
   },
-    logo: {
-      width: 100, 
-      height: 100, 
-      alignSelf: 'center', 
-      marginBottom: 10,
+  input: {
+    height: 50,
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    marginBottom: 20,
+    fontSize: 16,
+    color: '#333',
   },
-  
-  
-  
-
-
-
-
+  button: {
+    backgroundColor: '#00ADEF',
+    paddingVertical: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  link: {
+    color: '#00ADEF',
+    fontSize: 16,
+    textAlign: 'center',
+  },
 });
+
