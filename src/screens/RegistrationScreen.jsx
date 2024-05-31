@@ -11,6 +11,8 @@ const firebaseConfig = {
   messagingSenderId: "555430383847",
   appId: "1:555430383847:web:dff9b7e3d074e975e8d242"
 };
+
+
 const app = initializeApp(firebaseConfig);
 
 const AuthScreen = ({ email, setEmail, password, setPassword, isLogin, setIsLogin, handleAuthentication }) => {
@@ -58,7 +60,7 @@ const AuthenticatedScreen = ({ user, handleAuthentication }) => {
 export default function RegistrationScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [user, setUser] = useState(null); // Track user authentication state
+  const [user, setUser] = useState(null);
   const [isLogin, setIsLogin] = useState(true);
 
   const auth = getAuth(app);
@@ -66,36 +68,30 @@ export default function RegistrationScreen({ navigation }) {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       if (user) {
-        // Navigate to Home screen if user is already logged in
-        navigation.navigate('Home');
+        navigation.navigate('MainTabs');
       }
     });
 
     return () => unsubscribe();
-  }, [auth]);
+  }, [auth, navigation]);
 
   const handleAuthentication = async () => {
     try {
       if (user) {
-        // If user is already authenticated, log out
         console.log('User logged out successfully!');
         alert('User logged out successfully!');
         await signOut(auth);
       } else {
-        // Sign in or sign up
         if (isLogin) {
-          // Sign in
           await signInWithEmailAndPassword(auth, email, password);
           console.log('User signed in successfully!');
           alert('User signed in successfully!');
         } else {
-          // Sign up
           await createUserWithEmailAndPassword(auth, email, password);
           console.log('User created successfully!');
           alert('User created successfully!');
         }
-        // Navigate to Home screen after successful login or registration
-        navigation.navigate('Home');
+        navigation.navigate('MainTabs');
       }
     } catch (error) {
       console.error('Authentication error:', error.message);
@@ -123,13 +119,11 @@ export default function RegistrationScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: {
-    display: 'flex',
-    flexGrow: 1,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
     backgroundColor: '#f0f0f0',
-    height: '100vh',
   },
   authContainer: {
     width: '80%',
@@ -143,8 +137,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     marginBottom: 16,
     textAlign: 'center',
-    fontWeight: 'bold',
-    color: '#3498db',
   },
   input: {
     height: 40,

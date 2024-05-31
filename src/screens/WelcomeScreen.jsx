@@ -13,12 +13,10 @@ export default function WelcomeScreen({ navigation }) {
       <Image source={favicon} style={styles.logoImage} />
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.navigate('RegistrationScreen')}
+        onPress={() => navigation.navigate('Registration')}
       >
         <Text style={styles.buttonText}>Let's Begin</Text>
-        <Text>
-          <MaterialIcons name="arrow-forward-ios" size={22} color="#fff" />
-        </Text>
+        <MaterialIcons name="arrow-forward-ios" size={22} color="#fff" />
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -69,6 +67,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textAlign: 'center',
     fontWeight: 'bold',
-    fontFamily: 'Roboto-MediumItalic',
   },
 });
