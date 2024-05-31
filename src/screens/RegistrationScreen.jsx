@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, ScrollView, Image } from 'react-native';
 import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
 
@@ -18,8 +18,8 @@ const app = initializeApp(firebaseConfig);
 const AuthScreen = ({ email, setEmail, password, setPassword, isLogin, setIsLogin, handleAuthentication }) => {
   return (
     <View style={styles.authContainer}>
-      <Text style={styles.title}>{isLogin ? 'Sign In' : 'Sign Up'}</Text>
-
+      <Image source={require('../assets/Rentistan-Logo.png')} style={styles.logo} />
+      <Text style={styles.title}>{isLogin ? 'Sign In' : 'Sign Up'}</Text>   
       <TextInput
         style={styles.input}
         value={email}
@@ -46,7 +46,6 @@ const AuthScreen = ({ email, setEmail, password, setPassword, isLogin, setIsLogi
     </View>
   );
 }
-
 const AuthenticatedScreen = ({ user, handleAuthentication }) => {
   return (
     <View style={styles.authContainer}>
@@ -161,4 +160,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
   },
+    logo: {
+      width: 100, 
+      height: 100, 
+      alignSelf: 'center', 
+      marginBottom: 10,
+  },
+  
+  
+  
+
+
+
+
 });
