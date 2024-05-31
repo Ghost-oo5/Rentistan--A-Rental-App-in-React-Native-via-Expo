@@ -1,4 +1,4 @@
 {
   "compilerOptions": {},
-  "extends": "expo/npx tsconfig.base"
+  "extends": "expo/tsconfig.base"
 }
