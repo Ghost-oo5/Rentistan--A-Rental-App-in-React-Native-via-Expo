@@ -34,7 +34,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   TitleText: {
-    fontFamily: 'Inter-Bold',
     fontWeight: 'bold',
     fontSize: 30,
     color: '#20315f',

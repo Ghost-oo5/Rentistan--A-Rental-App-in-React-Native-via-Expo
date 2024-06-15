@@ -12,14 +12,13 @@ const firebaseConfig = {
   appId: "1:555430383847:web:dff9b7e3d074e975e8d242"
 };
 
-
 const app = initializeApp(firebaseConfig);
 
 const AuthScreen = ({ email, setEmail, password, setPassword, isLogin, setIsLogin, handleAuthentication }) => {
   return (
     <View style={styles.authContainer}>
       <Image source={require('../assets/Rentistan-Logo.png')} style={styles.logo} />
-      <Text style={styles.title}>{isLogin ? 'Sign In' : 'Sign Up'}</Text>   
+      <Text style={styles.title}>{isLogin ? 'Sign In' : 'Sign Up'}</Text>
       <TextInput
         style={styles.input}
         value={email}
@@ -37,7 +36,6 @@ const AuthScreen = ({ email, setEmail, password, setPassword, isLogin, setIsLogi
       <View style={styles.buttonContainer}>
         <Button title={isLogin ? 'Sign In' : 'Sign Up'} onPress={handleAuthentication} color="#3498db" />
       </View>
-
       <View style={styles.bottomContainer}>
         <Text style={styles.toggleText} onPress={() => setIsLogin(!isLogin)}>
           {isLogin ? 'Need an account? Sign Up' : 'Already have an account? Sign In'}
@@ -45,7 +43,8 @@ const AuthScreen = ({ email, setEmail, password, setPassword, isLogin, setIsLogi
       </View>
     </View>
   );
-}
+};
+
 const AuthenticatedScreen = ({ user, handleAuthentication }) => {
   return (
     <View style={styles.authContainer}>
@@ -116,45 +115,17 @@ export default function RegistrationScreen({ navigation }) {
   );
 }
 
-
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Register</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Name"
-        placeholderTextColor="#999"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        placeholderTextColor="#999"
-        keyboardType="email-address"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        placeholderTextColor="#999"
-        secureTextEntry
-      />
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('MenuMain')}
-      >
-        <Text style={styles.buttonText}>Sign Up</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate('Welcome')}>
-        <Text style={styles.link}>Back to Welcome</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     padding: 20,
     backgroundColor: '#fff',
+  },
+  logo: {
+    width: 200,
+    height: 200,
+    marginBottom: 20,
   },
   title: {
     fontSize: 32,
@@ -172,6 +143,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     fontSize: 16,
     color: '#333',
+    width: '100%', // Make the input fields take the full width of their container
   },
   button: {
     backgroundColor: '#00ADEF',
@@ -190,5 +162,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
   },
-});
+  authContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
 
+  buttonContainer: {
+    width: '100%',
+    marginTop: 10,
+  },
+  bottomContainer: {
+    marginTop: 20,
+  },
+  toggleText: {
+    color: '#3498db',
+    textAlign: 'center',
+  },
+  emailText: {
+    fontSize: 18,
+    marginBottom: 20,
+  },
+});

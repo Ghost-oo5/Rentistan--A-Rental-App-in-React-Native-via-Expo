@@ -4,7 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import WelcomeScreen from './src/screens/WelcomeScreen';
-import Menu from './src/screens/Menu';
+import Home from './src/screens/Home';
 import RegistrationScreen from './src/screens/RegistrationScreen';
 import SearchResult from './src/screens/SearchResult';
 import Filter from './src/screens/Filter';
@@ -21,10 +21,10 @@ import UserProfile from './src/screens/UserProfile';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-function MenuStack() {
+function HomeStack() {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="Menu" component={Menu} />
+      <Stack.Screen name="Home" component={Home} />
       <Stack.Screen name="SearchResult" component={SearchResult} />
       <Stack.Screen name="Filter" component={Filter} />
       <Stack.Screen name="ListingDetails" component={ListingDetails} />
@@ -45,8 +45,8 @@ function MainTabs() {
           let iconName;
 
           switch (route.name) {
-            case 'Menu':
-              iconName = 'menu';
+            case 'Home':
+              iconName = 'home';
               break;
             case 'Chats':
               iconName = 'chat';
@@ -67,7 +67,7 @@ function MainTabs() {
         tabBarInactiveTintColor: 'gray',
       })}
     >
-      <Tab.Screen name="Menu" component={MenuStack} />
+      <Tab.Screen name="Home" component={HomeStack} />
       <Tab.Screen name="Chats" component={Chats} />
       <Tab.Screen name="UserDashboard" component={UserDashboard} />
       <Tab.Screen name="UserProfile" component={UserProfile} />
