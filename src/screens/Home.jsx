@@ -96,7 +96,7 @@ const Home = ({ navigation }) => {
     return (
       <Pressable
         activeOpacity={0.8}
-        onPress={() => navigation.navigate('ListingDetails', house)}>
+        onPress={() => navigation.navigate('ListingDetails', { item: house })}>
         <View style={style.card}>
           {/* House image */}
           <Image source={{ uri: house.image }} style={style.cardImage} />
