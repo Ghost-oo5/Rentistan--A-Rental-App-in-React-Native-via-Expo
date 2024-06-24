@@ -1,6 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, StatusBar, Dimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, StatusBar, Dimensions, Image, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+
 import COLORS from '../consts/colors';
 
 const { width } = Dimensions.get('screen');
@@ -43,6 +45,13 @@ const ListingDetails = ({ route, navigation }) => {
               </View>
             </View>
           </View>
+          <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('Chats')}
+      >
+        <Text style={styles.buttonText}>Contact </Text>
+        <MaterialIcons name="arrow-forward-ios" size={22} color="#fff" />
+      </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -95,6 +104,24 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     color: COLORS.grey,
     fontSize: 16,
+  },
+  button: {
+    backgroundColor: '#00ADEF',
+    padding: 20,
+    // width: '90%',
+    borderRadius: 10,
+    marginBottom: 50,
+    marginTop: 50,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    shadowOffset: { width: 8, height: 8 },
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 18,
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
 });
 

@@ -21,7 +21,7 @@ const MainChatScreen = ({ navigation }) => {
 
   const navigateToChat = (conversation) => {
     // Navigate to individual chat screen with conversation details
-    navigation.navigate('Chat', { conversation });
+    navigation.navigate('ChatRoom', { conversation }); // Ensure the screen name matches the one in your navigator
   };
 
   const renderItem = ({ item }) => (

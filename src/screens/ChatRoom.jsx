@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
 
-const ChatRoom = () => {
+const ChatRoom = ({ route }) => {
+  const { conversation } = route.params;
+
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
 
@@ -26,7 +28,7 @@ const ChatRoom = () => {
     // Simulate agent's reply (replace with actual logic)
     setTimeout(() => {
       const replyMessage = { id: String(messages.length + 2), text: 'I will assist you shortly.', sender: 'agent' };
-      setMessages([...messages, replyMessage]);
+      setMessages(prevMessages => [...prevMessages, replyMessage]);
     }, 1000); // Simulate delay
   };
 
@@ -38,12 +40,13 @@ const ChatRoom = () => {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.userName}>{conversation.userName}</Text>
       <FlatList
         data={messages}
         renderItem={renderItem}
         keyExtractor={item => item.id}
         style={styles.messageList}
-        inverted  // Start displaying messages from bottom
+        inverted // Start displaying messages from bottom
       />
       <View style={styles.inputContainer}>
         <TextInput
@@ -64,6 +67,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f0f0f0',
+  },
+  userName: {
+    fontWeight: 'bold',
+    fontSize: 24,
+    padding: 20,
+    backgroundColor: '#fff',
   },
   messageList: {
     flex: 1,

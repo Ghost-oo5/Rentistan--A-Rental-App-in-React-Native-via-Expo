@@ -1,7 +1,10 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getAuth, initializeAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getReactNativePersistence } from 'firebase/auth';
+
 const firebaseConfig = {
   apiKey: "AIzaSyCsTEeEMLQlKJxsGTaZUA6RbS3ebfMG7c0",
   authDomain: "rentistan-react-native-app.firebaseapp.com",
@@ -13,6 +16,26 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-export const FIREBASE_APP = initializeApp(firebaseConfig);
-export const FIREBASE_Auth = getAuth(FIREBASE_APP);
-export const FIRESTORE_DB = getFirestore(FIREBASE_APP);
+let FIREBASE_APP;
+let FIREBASE_Auth;
+let FIRESTORE_DB;
+
+if (!getApps().length) {
+  FIREBASE_APP = initializeApp(firebaseConfig);
+
+  if (Platform.OS !== 'web') {
+    FIREBASE_Auth = initializeAuth(FIREBASE_APP, {
+      persistence: getReactNativePersistence(AsyncStorage)
+    });
+  } else {
+    FIREBASE_Auth = getAuth(FIREBASE_APP);
+  }
+
+  FIRESTORE_DB = getFirestore(FIREBASE_APP);
+} else {
+  FIREBASE_APP = getApp();
+  FIREBASE_Auth = getAuth(FIREBASE_APP);
+  FIRESTORE_DB = getFirestore(FIREBASE_APP);
+}
+
+export { FIREBASE_APP, FIREBASE_Auth, FIRESTORE_DB };
