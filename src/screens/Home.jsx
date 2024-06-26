@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { FIRESTORE_DB } from '../../FirebaseConfig';
 import { collection, onSnapshot } from 'firebase/firestore';
-import { FAB } from 'react-native-elements';
+import { FAB, SearchBar } from 'react-native-elements';
 
 const Home = ({ navigation }) => {
   const [rentals, setRentals] = useState([]);
+  const [search, setSearch] = useState('');
+  const [filteredRentals, setFilteredRentals] = useState([]);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(FIRESTORE_DB, 'rentals'), (snapshot) => {
@@ -14,6 +16,7 @@ const Home = ({ navigation }) => {
         ...doc.data()
       }));
       setRentals(rentalList);
+      setFilteredRentals(rentalList); // Initialize with full rental list
     }, (error) => {
       console.error('Error fetching rentals: ', error);
     });
@@ -21,20 +24,40 @@ const Home = ({ navigation }) => {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (search === '') {
+      setFilteredRentals(rentals);
+    } else {
+      setFilteredRentals(
+        rentals.filter((item) =>
+          item.title.toLowerCase().includes(search.toLowerCase())
+        )
+      );
+    }
+  }, [search, rentals]);
+
   const handleDetailsPress = (item) => {
     navigation.navigate('ListingDetails', { item });
   };
 
   const handleFabPress = () => {
     console.log('FAB pressed');
-    // Handle FAB press, e.g., navigate to a new screen
-    navigation.navigate('AddRental'); // Example navigation
+    navigation.navigate('AddRental');
   };
 
   return (
     <View style={styles.container}>
+      <SearchBar
+        placeholder="Search by title..."
+        onChangeText={setSearch}
+        value={search}
+        lightTheme
+        round
+        containerStyle={styles.searchBar}
+        inputContainerStyle={{ backgroundColor: 'white' }}
+      />
       <FlatList
-        data={rentals}
+        data={filteredRentals}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.card}>
@@ -57,7 +80,7 @@ const Home = ({ navigation }) => {
         placement="right"
         color="#00ADEF"
         title={'Add Listing'}
-        icon={{ name: 'add', color: 'white' }} 
+        icon={{ name: 'add', color: 'white' }}
         onPress={handleFabPress}
       />
     </View>
@@ -69,6 +92,12 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: '#f8f8f8',
+  },
+  searchBar: {
+    marginBottom: 10,
+    backgroundColor: '#f8f8f8',
+    borderTopWidth: 0,
+    borderBottomWidth: 0,
   },
   card: {
     backgroundColor: '#fff',
