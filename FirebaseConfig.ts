@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, initializeAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getReactNativePersistence } from 'firebase/auth';
@@ -19,6 +20,7 @@ const firebaseConfig = {
 let FIREBASE_APP;
 let FIREBASE_Auth;
 let FIRESTORE_DB;
+let FIREBASE_STORAGE;
 
 if (!getApps().length) {
   FIREBASE_APP = initializeApp(firebaseConfig);
@@ -32,10 +34,12 @@ if (!getApps().length) {
   }
 
   FIRESTORE_DB = getFirestore(FIREBASE_APP);
+  FIREBASE_STORAGE = getStorage(FIREBASE_APP);
 } else {
   FIREBASE_APP = getApp();
   FIREBASE_Auth = getAuth(FIREBASE_APP);
   FIRESTORE_DB = getFirestore(FIREBASE_APP);
+  FIREBASE_STORAGE = getStorage(FIREBASE_APP);
 }
 
-export { FIREBASE_APP, FIREBASE_Auth, FIRESTORE_DB };
+export { FIREBASE_APP, FIREBASE_Auth, FIRESTORE_DB, FIREBASE_STORAGE };

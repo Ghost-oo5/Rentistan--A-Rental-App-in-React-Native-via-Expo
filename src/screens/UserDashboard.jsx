@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, FlatList, Image, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { FIRESTORE_DB } from '../../FirebaseConfig';
 import { collection, getDocs, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
-import { ListItem, Icon } from 'react-native-elements';
+import { ListItem, Icon, Text } from 'react-native-elements';
 
 const UserDashboard = ({ navigation }) => {
   const [listings, setListings] = useState([]);
@@ -24,7 +24,6 @@ const UserDashboard = ({ navigation }) => {
   const handleDeleteListing = async (id) => {
     try {
       await deleteDoc(doc(FIRESTORE_DB, 'rentals', id));
-      // No need to update listings state here because the onSnapshot listener will handle updates
       Alert.alert('Success', 'Listing deleted successfully!');
     } catch (error) {
       console.error('Error deleting listing: ', error);
@@ -34,13 +33,12 @@ const UserDashboard = ({ navigation }) => {
 
   const handleModifyListing = (item) => {
     console.log('Edit Listing pressed');
-    // Navigate to EditListing screen with the listing item as route parameter
     navigation.navigate('EditListing', { item });
   };
 
   const handleAddListing = () => {
     console.log('Add Listing pressed');
-    navigation.navigate('AddRental'); // Navigate to AddRental screen
+    navigation.navigate('AddRental');
   };
 
   return (

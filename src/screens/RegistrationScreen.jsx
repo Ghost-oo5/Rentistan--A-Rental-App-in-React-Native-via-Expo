@@ -1,18 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, ScrollView, Image } from 'react-native';
-import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCsTEeEMLQlKJxsGTaZUA6RbS3ebfMG7c0",
-  authDomain: "rentistan-react-native-app.firebaseapp.com",
-  projectId: "rentistan-react-native-app",
-  storageBucket: "rentistan-react-native-app.appspot.com",
-  messagingSenderId: "555430383847",
-  appId: "1:555430383847:web:dff9b7e3d074e975e8d242"
-};
-
-const app = initializeApp(firebaseConfig);
+import { FIREBASE_APP } from '../../FirebaseConfig'; // Adjust path as per your project structure
 
 const AuthScreen = ({ email, setEmail, password, setPassword, isLogin, setIsLogin, handleAuthentication }) => {
   return (
@@ -61,7 +50,7 @@ export default function RegistrationScreen({ navigation }) {
   const [user, setUser] = useState(null);
   const [isLogin, setIsLogin] = useState(true);
 
-  const auth = getAuth(app);
+  const auth = getAuth(FIREBASE_APP);
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
