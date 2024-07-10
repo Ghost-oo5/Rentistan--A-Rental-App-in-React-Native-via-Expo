@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 
 const MainChatScreen = ({ navigation }) => {
   const [conversations, setConversations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Dummy data for conversations (replace with actual data or API integration)
   const initialConversations = [
@@ -16,7 +18,10 @@ const MainChatScreen = ({ navigation }) => {
   useEffect(() => {
     // Simulating API call to fetch conversations
     // Replace with actual API call
-    setConversations(initialConversations);
+    setTimeout(() => {
+      setConversations(initialConversations);
+      setLoading(false);
+    }, 1000);
   }, []);
 
   const navigateToChat = (conversation) => {
@@ -36,6 +41,22 @@ const MainChatScreen = ({ navigation }) => {
     </TouchableOpacity>
   );
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#00ADEF" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Failed to load conversations.</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -52,6 +73,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f0f0f0',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
   },
   listContainer: {
     paddingVertical: 10,

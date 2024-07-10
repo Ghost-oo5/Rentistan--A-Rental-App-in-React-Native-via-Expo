@@ -16,11 +16,18 @@ import ChatRoom from './src/screens/ChatRoom';
 import TenantFinder from './src/screens/TenantFinder';
 import ListNewProperty from './src/screens/ListNewProperty';
 import ListedProperties from './src/screens/ListedProperties';
-import UserDashboard from './src/screens/UserDashboard';
+// import UserDashboard from './src/screens/UserDashboard';
 import UserProfile from './src/screens/UserProfile';
 import ProfileScreen from './src/screens/UserProfile'; // Import ProfileScreen
 import EditProfileScreen from './src/screens/EditProfileScreen'; // Import EditProfileScreen
 import AddRental from './src/screens/AddRental';
+import EditListing from './src/screens/EditListing';
+import FavoritesScreen from './src/screens/FavoritesScreen';
+import NotificationsScreen from './src/screens/NotificationsScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
+import HelpAndSupportScreen from './src/screens/HelpAndSupportScreen';
+import ReviewsAndRatingsScreen from './src/screens/ReviewsAndRatingsScreen';
+
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -36,6 +43,7 @@ function HomeStack() {
       <Stack.Screen name="SearchResult" component={SearchResult} />
       <Stack.Screen name="Filter" component={Filter} />
       <Stack.Screen name="ListingDetails" component={ListingDetails} />
+      <Stack.Screen name="EditListing" component={EditListing} />
       <Stack.Screen name="Checkout" component={Checkout} />
       <Stack.Screen name="ChatRoom" component={ChatRoom} />
       <Stack.Screen name="TenantFinder" component={TenantFinder} />
@@ -43,10 +51,10 @@ function HomeStack() {
       <Stack.Screen name="ListedProperties" component={ListedProperties} />
       <Stack.Screen name="AddRental" component={AddRental} /> 
       <Stack.Screen name='EditProfileScreen' component={EditProfileScreen} />
-
     </Stack.Navigator>
   );
 }
+
 
 function MainTabs() {
   return (
@@ -62,8 +70,14 @@ function MainTabs() {
             case 'Chats':
               iconName = 'chat';
               break;
-            case 'UserDashboard':
-              iconName = 'dashboard';
+            // case 'UserDashboard':
+            //   iconName = 'dashboard';
+            //   break;
+            case 'Favorites':
+              iconName = 'favorite';
+              break;
+            case 'Notifications':
+              iconName = 'notifications';
               break;
             default:
               iconName = 'home';
@@ -77,10 +91,13 @@ function MainTabs() {
     >
       <Tab.Screen name="HomeTab" component={HomeStack} options={{ title: 'Home' }} />
       <Tab.Screen name="Chats" component={Chats} />
-      <Tab.Screen name="UserDashboard" component={UserDashboard} />
+      {/* <Tab.Screen name="UserDashboard" component={UserDashboard} /> */}
+      <Tab.Screen name="Favorites" component={FavoritesScreen} />
+      <Tab.Screen name="Notifications" component={NotificationsScreen} />
     </Tab.Navigator>
   );
 }
+
 
 export default function App() {
   return (
@@ -129,6 +146,21 @@ export default function App() {
           component={EditProfileScreen} 
           options={{ title: 'Edit Profile' }} 
         />
+        <Stack.Screen 
+          name="Settings" 
+          component={SettingsScreen} 
+          options={{ title: 'Settings' }} 
+        />
+        <Stack.Screen 
+          name="HelpAndSupport" 
+          component={HelpAndSupportScreen} 
+          options={{ title: 'Help and Support' }} 
+        />
+        <Stack.Screen 
+          name="ReviewsAndRatings" 
+          component={ReviewsAndRatingsScreen} 
+          options={{ title: 'Reviews and Ratings' }} 
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -145,3 +177,4 @@ const styles = StyleSheet.create({
     marginTop: 110,
   },
 });
+

@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Image, StyleSheet, TouchableOpacity, Alert, SectionList } from 'react-native';
-import { FIRESTORE_DB, FIREBASE_Auth } from '../../FirebaseConfig'; // Adjust path as per your project structure
-import { collection, getDoc, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
+import { FIRESTORE_DB, FIREBASE_Auth } from '../../FirebaseConfig';
+import { collection, getDoc, onSnapshot, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { ListItem, Icon, Text, Button } from 'react-native-elements';
-import { useNavigation } from '@react-navigation/native'; // Import navigation
+import { useNavigation } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 
 const ProfileScreen = () => {
   const [listings, setListings] = useState([]);
@@ -12,11 +15,13 @@ const ProfileScreen = () => {
   const [contactNumber, setContactNumber] = useState('');
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
+  const [profileImage, setProfileImage] = useState('');
 
-  const navigation = useNavigation(); // Use navigation hook
+  const navigation = useNavigation();
+  const storage = getStorage();
 
   useEffect(() => {
-    const unsubscribe = FIREBASE_Auth.onAuthStateChanged(async (user) => {
+    const unsubscribeAuth = FIREBASE_Auth.onAuthStateChanged(async (user) => {
       if (user) {
         setUserProfile(user);
         const userDoc = await getDoc(doc(FIRESTORE_DB, 'users', user.uid));
@@ -26,6 +31,7 @@ const ProfileScreen = () => {
           setContactNumber(data.contactNumber || '');
           setEmail(data.email || '');
           setAddress(data.address || '');
+          setProfileImage(data.photoURL || '');
         }
       } else {
         setUserProfile(null);
@@ -33,17 +39,12 @@ const ProfileScreen = () => {
     });
 
     const unsubscribeListings = onSnapshot(collection(FIRESTORE_DB, 'rentals'), (snapshot) => {
-      const listingsList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const listingsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setListings(listingsList);
-    }, (error) => {
-      console.error('Error fetching listings: ', error);
     });
 
     return () => {
-      unsubscribe();
+      unsubscribeAuth();
       unsubscribeListings();
     };
   }, []);
@@ -59,8 +60,6 @@ const ProfileScreen = () => {
   };
 
   const handleModifyListing = (item) => {
-    console.log('Edit Listing pressed');
-    // Navigate to EditListing screen with the listing item as route parameter
     navigation.navigate('EditListing', { item });
   };
 
@@ -68,12 +67,111 @@ const ProfileScreen = () => {
     navigation.navigate('EditProfileScreen', { profileData: { name, contactNumber, email, address } });
   };
 
+  // Function to convert local file URI to a blob
+ 
+const getBlobFromUri = async (uri) => {
+  try {
+    const response = await FileSystem.readAsStringAsync(uri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    const blob = await new Blob([response], { type: 'image/jpeg' });
+    return blob;
+  } catch (error) {
+    console.error('Error converting URI to blob:', error);
+    throw error;
+  }
+};
+  // Updated uploadProfileImage function
+  const uploadProfileImage = async (uri) => {
+    try {
+      let blob;
+      if (uri.startsWith('file://')) {
+        blob = await getBlobFromUri(uri);
+      } else {
+        const response = await fetch(uri);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+        }
+        blob = await response.blob();
+      }
+  
+      const storageRef = ref(storage, `profilePictures/${userProfile.uid}`);
+      await uploadBytes(storageRef, blob);
+      const downloadURL = await getDownloadURL(storageRef);
+      console.log('Uploaded image URL:', downloadURL);
+      return downloadURL;
+    } catch (error) {
+      console.error('Error during image upload:', error);
+      if (error.code === 'storage/unknown') {
+        // Handle specific Firebase Storage errors
+        console.error('Firebase Storage Error:', error.message);
+      } else {
+        // Handle general network errors
+        console.error('Network Error:', error.message);
+      }
+      throw error; // Propagate the error to handle it further up in the call stack
+    }
+  };
+  
+  
+  
+  
+  const handleImageUpload = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      console.log('Permission result:', permissionResult);
+  
+      if (!permissionResult.granted) {
+        alert("You've refused to allow this app to access your photos!");
+        return;
+      }
+  
+      const pickerResult = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, aspect: [4, 3] });
+      console.log('Picker result:', pickerResult);
+  
+      if (!pickerResult.cancelled && pickerResult.assets.length > 0) {
+        const pickedImage = pickerResult.assets[0]; // Access the first asset in the assets array
+        const { uri } = pickedImage;
+        console.log('Picked image URI:', uri);
+  
+        // Check if URI is valid
+        if (!uri) {
+          console.error('URI is undefined or null.');
+          Alert.alert('Error', 'Failed to pick image. Please try again.');
+          return;
+        }
+  
+        setProfileImage(uri);
+  
+        const imageUrl = await uploadProfileImage(uri);
+        await updateProfileImage(imageUrl);
+      }
+    } catch (error) {
+      console.error('Error during image upload:', error);
+      Alert.alert('Error', 'Failed to upload image.');
+    }
+  };
+  
+  
+
+  const updateProfileImage = async (imageUrl) => {
+    try {
+      const userDocRef = doc(FIRESTORE_DB, 'users', userProfile.uid);
+      await updateDoc(userDocRef, { photoURL: imageUrl });
+      setUserProfile({ ...userProfile, photoURL: imageUrl });
+      Alert.alert('Success', 'Profile image updated successfully!');
+    } catch (error) {
+      console.error('Error updating profile image:', error);
+      Alert.alert('Error', 'Failed to update profile image.');
+    }
+  };
+
   const renderProfileSection = () => (
     <View style={styles.profileContainer}>
       {userProfile && (
         <>
-          <Image source={{ uri: userProfile.photoURL }} style={styles.profileImage} />
-          <TouchableOpacity style={styles.editIconContainer} onPress={handleEditProfile}>
+          <Image source={{ uri: profileImage || userProfile.photoURL }} style={styles.profileImage} />
+          <TouchableOpacity style={styles.editIconContainer} onPress={handleImageUpload}>
             <Icon name="edit" color="#00ADEF" />
           </TouchableOpacity>
           <Text h4 style={styles.username}>{userProfile.displayName}</Text>
@@ -152,39 +250,32 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   email: {
-    color: 'gray',
     marginBottom: 16,
+    color: 'gray',
   },
   header: {
-    marginBottom: 16,
-    marginTop: 16,
+    marginBottom: 8,
   },
   infoContainer: {
-    width: '100%',
-    padding: 16,
     backgroundColor: '#fff',
+    padding: 16,
     borderRadius: 8,
-    elevation: 2,
-    marginBottom: 16,
+    width: '100%',
   },
   infoLabel: {
-    fontSize: 16,
-    color: 'gray',
+    fontWeight: 'bold',
     marginBottom: 4,
   },
   infoValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
     marginBottom: 16,
   },
   editButton: {
     backgroundColor: '#00ADEF',
-    marginTop: 16,
   },
   image: {
     width: 50,
     height: 50,
-    resizeMode: 'cover',
+    marginRight: 8,
   },
 });
 

@@ -1,3 +1,4 @@
+// FirebaseConfig.js
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, initializeAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
@@ -16,7 +17,6 @@ const firebaseConfig = {
   measurementId: "G-CD040CLPW6"
 };
 
-// Initialize Firebase
 let FIREBASE_APP;
 let FIREBASE_Auth;
 let FIRESTORE_DB;

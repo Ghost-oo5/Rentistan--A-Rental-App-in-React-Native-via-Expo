@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, ScrollView, Image } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, Image, Alert } from 'react-native';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
-import { FIREBASE_APP } from '../../FirebaseConfig'; // Adjust path as per your project structure
+import { FIREBASE_APP, FIREBASE_Auth } from '../../FirebaseConfig'; // Adjust path as per your project structure
 
 const AuthScreen = ({ email, setEmail, password, setPassword, isLogin, setIsLogin, handleAuthentication }) => {
   return (
     <View style={styles.authContainer}>
-      <Image source={require('../assets/Rentistan-Logo.png')} style={styles.logo} />
+      <Image source={require('../assets/Rentistan-Logo.png')} style={styles.logo} resizeMode="contain" />
       <Text style={styles.title}>{isLogin ? 'Sign In' : 'Sign Up'}</Text>
       <TextInput
         style={styles.input}
@@ -23,7 +23,9 @@ const AuthScreen = ({ email, setEmail, password, setPassword, isLogin, setIsLogi
         secureTextEntry
       />
       <View style={styles.buttonContainer}>
-        <Button title={isLogin ? 'Sign In' : 'Sign Up'} onPress={handleAuthentication} color="#3498db" />
+        <Pressable style={styles.button} onPress={handleAuthentication}>
+          <Text style={styles.buttonText}>{isLogin ? 'Sign In' : 'Sign Up'}</Text>
+        </Pressable>
       </View>
       <View style={styles.bottomContainer}>
         <Text style={styles.toggleText} onPress={() => setIsLogin(!isLogin)}>
@@ -34,12 +36,14 @@ const AuthScreen = ({ email, setEmail, password, setPassword, isLogin, setIsLogi
   );
 };
 
-const AuthenticatedScreen = ({ user, handleAuthentication }) => {
+const AuthenticatedScreen = ({ user, handleLogout }) => {
   return (
     <View style={styles.authContainer}>
       <Text style={styles.title}>Welcome</Text>
       <Text style={styles.emailText}>{user.email}</Text>
-      <Button title="Logout" onPress={handleAuthentication} color="#e74c3c" />
+      <Pressable style={[styles.button, styles.logoutButton]} onPress={handleLogout}>
+        <Text style={styles.buttonText}>Logout</Text>
+      </Pressable>
     </View>
   );
 };
@@ -51,44 +55,54 @@ export default function RegistrationScreen({ navigation }) {
   const [isLogin, setIsLogin] = useState(true);
 
   const auth = getAuth(FIREBASE_APP);
+  
   useEffect(() => {
+    // Clear the persisted auth state on app start
+    signOut(auth);
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
-      if (user) {
-        navigation.navigate('MainTabs');
-      }
     });
 
     return () => unsubscribe();
-  }, [auth, navigation]);
+  }, [auth]);
 
   const handleAuthentication = async () => {
     try {
       if (user) {
-        console.log('User logged out successfully!');
-        alert('User logged out successfully!');
         await signOut(auth);
+        setUser(null);
+        Alert.alert('Success', 'User logged out successfully!');
       } else {
         if (isLogin) {
           await signInWithEmailAndPassword(auth, email, password);
-          console.log('User signed in successfully!');
-          alert('User signed in successfully!');
+          Alert.alert('Success', 'User signed in successfully!');
         } else {
           await createUserWithEmailAndPassword(auth, email, password);
-          console.log('User created successfully!');
-          alert('User created successfully!');
+          Alert.alert('Success', 'User created successfully!');
         }
+        setUser(auth.currentUser);
         navigation.navigate('MainTabs');
       }
     } catch (error) {
-      console.error('Authentication error:', error.message);
+      Alert.alert('Authentication Error', error.message);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+      Alert.alert('Success', 'User logged out successfully!');
+    } catch (error) {
+      Alert.alert('Logout Error', error.message);
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {user ? (
-        <AuthenticatedScreen user={user} handleAuthentication={handleAuthentication} />
+        <AuthenticatedScreen user={user} handleLogout={handleLogout} />
       ) : (
         <AuthScreen
           email={email}
@@ -157,7 +171,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
-
   buttonContainer: {
     width: '100%',
     marginTop: 10,
@@ -172,5 +185,8 @@ const styles = StyleSheet.create({
   emailText: {
     fontSize: 18,
     marginBottom: 20,
+  },
+  logoutButton: {
+    backgroundColor: '#e74c3c',
   },
 });
