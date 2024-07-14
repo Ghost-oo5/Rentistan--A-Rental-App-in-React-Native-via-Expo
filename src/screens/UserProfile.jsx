@@ -13,7 +13,6 @@ const ProfileScreen = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [name, setName] = useState('');
   const [contactNumber, setContactNumber] = useState('');
-  const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
   const [profileImage, setProfileImage] = useState('');
 
@@ -29,7 +28,6 @@ const ProfileScreen = () => {
           const data = userDoc.data();
           setName(data.name || '');
           setContactNumber(data.contactNumber || '');
-          setEmail(data.email || '');
           setAddress(data.address || '');
           setProfileImage(data.photoURL || '');
         }
@@ -64,24 +62,23 @@ const ProfileScreen = () => {
   };
 
   const handleEditProfile = () => {
-    navigation.navigate('EditProfileScreen', { profileData: { name, contactNumber, email, address } });
+    navigation.navigate('EditProfileScreen', { profileData: { name, contactNumber, address } });
   };
 
   // Function to convert local file URI to a blob
- 
-const getBlobFromUri = async (uri) => {
-  try {
-    const response = await FileSystem.readAsStringAsync(uri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-    const blob = await new Blob([response], { type: 'image/jpeg' });
-    return blob;
-  } catch (error) {
-    console.error('Error converting URI to blob:', error);
-    throw error;
-  }
-};
-  // Updated uploadProfileImage function
+  const getBlobFromUri = async (uri) => {
+    try {
+      const response = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      const blob = await new Blob([response], { type: 'image/jpeg' });
+      return blob;
+    } catch (error) {
+      console.error('Error converting URI to blob:', error);
+      throw error;
+    }
+  };
+
   const uploadProfileImage = async (uri) => {
     try {
       let blob;
@@ -94,7 +91,7 @@ const getBlobFromUri = async (uri) => {
         }
         blob = await response.blob();
       }
-  
+
       const storageRef = ref(storage, `profilePictures/${userProfile.uid}`);
       await uploadBytes(storageRef, blob);
       const downloadURL = await getDownloadURL(storageRef);
@@ -103,46 +100,41 @@ const getBlobFromUri = async (uri) => {
     } catch (error) {
       console.error('Error during image upload:', error);
       if (error.code === 'storage/unknown') {
-        // Handle specific Firebase Storage errors
         console.error('Firebase Storage Error:', error.message);
       } else {
-        // Handle general network errors
         console.error('Network Error:', error.message);
       }
-      throw error; // Propagate the error to handle it further up in the call stack
+      throw error;
     }
   };
-  
-  
-  
-  
+
   const handleImageUpload = async () => {
     try {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
       console.log('Permission result:', permissionResult);
-  
+
       if (!permissionResult.granted) {
         alert("You've refused to allow this app to access your photos!");
         return;
       }
-  
+
       const pickerResult = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, aspect: [4, 3] });
       console.log('Picker result:', pickerResult);
-  
+
       if (!pickerResult.cancelled && pickerResult.assets.length > 0) {
         const pickedImage = pickerResult.assets[0]; // Access the first asset in the assets array
         const { uri } = pickedImage;
         console.log('Picked image URI:', uri);
-  
+
         // Check if URI is valid
         if (!uri) {
           console.error('URI is undefined or null.');
           Alert.alert('Error', 'Failed to pick image. Please try again.');
           return;
         }
-  
+
         setProfileImage(uri);
-  
+
         const imageUrl = await uploadProfileImage(uri);
         await updateProfileImage(imageUrl);
       }
@@ -151,8 +143,6 @@ const getBlobFromUri = async (uri) => {
       Alert.alert('Error', 'Failed to upload image.');
     }
   };
-  
-  
 
   const updateProfileImage = async (imageUrl) => {
     try {
@@ -180,18 +170,23 @@ const getBlobFromUri = async (uri) => {
       )}
       <Text h4 style={styles.header}>Profile Information</Text>
       <View style={styles.infoContainer}>
-        <Text style={styles.infoLabel}>Name</Text>
-        <Text style={styles.infoValue}>{name}</Text>
-        <Text style={styles.infoLabel}>Contact Number</Text>
-        <Text style={styles.infoValue}>{contactNumber}</Text>
-        <Text style={styles.infoLabel}>Email</Text>
-        <Text style={styles.infoValue}>{email}</Text>
-        <Text style={styles.infoLabel}>Address</Text>
-        <Text style={styles.infoValue}>{address}</Text>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Name:</Text>
+          <Text style={styles.infoValue}>{name}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Contact Number:</Text>
+          <Text style={styles.infoValue}>{contactNumber}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Address:</Text>
+          <Text style={styles.infoValue}>{address}</Text>
+        </View>
         <Button title="Edit Information" onPress={handleEditProfile} buttonStyle={styles.editButton} />
       </View>
     </View>
   );
+  
 
   const renderListingItem = ({ item }) => (
     <ListItem bottomDivider>
@@ -234,12 +229,27 @@ const styles = StyleSheet.create({
   profileContainer: {
     alignItems: 'center',
     marginBottom: 16,
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    elevation: 2,
+    width: '100%',
   },
   profileImage: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    marginBottom: 8,
+    marginBottom: 0,
+    marginTop: 15,
+    borderWidth: 3,
+    borderColor: '#00ADEF',
   },
   editIconContainer: {
     position: 'absolute',
@@ -247,36 +257,41 @@ const styles = StyleSheet.create({
     right: 10,
   },
   username: {
+    fontWeight: 'bold',
+    fontSize: 24,
     marginBottom: 4,
   },
   email: {
-    marginBottom: 16,
+    fontSize: 16,
     color: 'gray',
+    marginBottom: 16,
   },
   header: {
+    fontSize: 20,
     marginBottom: 8,
+    color: '#00ADEF',
   },
   infoContainer: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 8,
     width: '100%',
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
   },
   infoLabel: {
     fontWeight: 'bold',
-    marginBottom: 4,
+    fontSize: 16,
   },
   infoValue: {
-    marginBottom: 16,
+    fontSize: 16,
+    color: '#333',
   },
   editButton: {
     backgroundColor: '#00ADEF',
-  },
-  image: {
-    width: 50,
-    height: 50,
-    marginRight: 8,
+    marginTop: 12,
   },
 });
+
 
 export default ProfileScreen;

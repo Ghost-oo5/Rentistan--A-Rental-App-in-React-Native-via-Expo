@@ -1,22 +1,43 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { View, TextInput, StyleSheet, Alert, Image, ScrollView, TouchableOpacity, Text } from 'react-native';
 import { FIRESTORE_DB } from '../../FirebaseConfig';
 import { collection, addDoc } from 'firebase/firestore';
+import * as ImagePicker from 'expo-image-picker';
 
 const AddRental = ({ navigation }) => {
   const [title, setTitle] = useState('');
-  const [image, setImage] = useState('');
+  const [image, setImage] = useState(null);
   const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
+  const [rooms, setRooms] = useState('');
+  const [kitchen, setKitchen] = useState('');
+  const [washroom, setWashroom] = useState('');
+  const [size, setSize] = useState('');
+  const [area, setArea] = useState('');
 
   const handleAddRental = async () => {
-    if (title && image && price && description) {
+    console.log("Title:", title);
+    console.log("Image URI:", image);
+    console.log("Price:", price);
+    console.log("Description:", description);
+    console.log("Rooms:", rooms);
+    console.log("Kitchen:", kitchen);
+    console.log("Washroom:", washroom);
+    console.log("Size:", size);
+    console.log("Area:", area);
+
+    if (title && image && price && description && rooms && kitchen && washroom && size && area) {
       try {
         await addDoc(collection(FIRESTORE_DB, 'rentals'), {
           title,
           image,
           price,
           description,
+          rooms,
+          kitchen,
+          washroom,
+          size,
+          area,
         });
         Alert.alert('Success', 'Rental listing added successfully!');
         navigation.goBack();
@@ -29,20 +50,32 @@ const AddRental = ({ navigation }) => {
     }
   };
 
+  const handleImageUpload = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted) {
+      const pickerResult = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true });
+      if (!pickerResult.cancelled && pickerResult.assets && pickerResult.assets.length > 0) {
+        const selectedImage = pickerResult.assets[0].uri; // Access the URI of the first asset
+        setImage(selectedImage);
+        console.log('Image URI:', selectedImage); // Log the URI for debugging
+      }
+    } else {
+      Alert.alert("Permission needed", "You need to grant permission to access the library.");
+    }
+  };
+
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <TextInput
         style={styles.input}
         placeholder="Title"
         value={title}
         onChangeText={setTitle}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Image URL"
-        value={image}
-        onChangeText={setImage}
-      />
+      <TouchableOpacity style={styles.uploadButton} onPress={handleImageUpload}>
+        <Text style={styles.buttonText}>Upload Image</Text>
+      </TouchableOpacity>
+      {image && <Image source={{ uri: image }} style={styles.imagePreview} />}
       <TextInput
         style={styles.input}
         placeholder="Price"
@@ -56,14 +89,49 @@ const AddRental = ({ navigation }) => {
         value={description}
         onChangeText={setDescription}
       />
-      <Button title="Add Rental" onPress={handleAddRental} />
-    </View>
+      <TextInput
+        style={styles.input}
+        placeholder="Rooms"
+        value={rooms}
+        onChangeText={setRooms}
+        keyboardType="numeric"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Kitchen"
+        value={kitchen}
+        onChangeText={setKitchen}
+        keyboardType="numeric"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Washrooms"
+        value={washroom}
+        onChangeText={setWashroom}
+        keyboardType="numeric"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Size (in sq. m)"
+        value={size}
+        onChangeText={setSize}
+        keyboardType="numeric"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Area"
+        value={area}
+        onChangeText={setArea}
+      />
+      <TouchableOpacity style={styles.addButton} onPress={handleAddRental}>
+        <Text style={styles.buttonText}>Add Rental</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     padding: 16,
     backgroundColor: '#f8f8f8',
   },
@@ -73,6 +141,32 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 12,
     padding: 8,
+  },
+  imagePreview: {
+    width: '100%',
+    height: 200,
+    marginVertical: 10,
+    borderRadius: 10,
+  },
+  uploadButton: {
+    backgroundColor: '#28A745',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  addButton: {
+    backgroundColor: '#00ADEF',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 30,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

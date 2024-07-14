@@ -3,6 +3,7 @@ import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity } from 'react
 import { FIRESTORE_DB } from '../../FirebaseConfig';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { FAB, SearchBar } from 'react-native-elements';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const Home = ({ navigation }) => {
   const [rentals, setRentals] = useState([]);
@@ -16,7 +17,7 @@ const Home = ({ navigation }) => {
         ...doc.data()
       }));
       setRentals(rentalList);
-      setFilteredRentals(rentalList); // Initialize with full rental list
+      setFilteredRentals(rentalList);
     }, (error) => {
       console.error('Error fetching rentals: ', error);
     });
@@ -41,7 +42,6 @@ const Home = ({ navigation }) => {
   };
 
   const handleFabPress = () => {
-    console.log('FAB pressed');
     navigation.navigate('AddRental');
   };
 
@@ -66,6 +66,28 @@ const Home = ({ navigation }) => {
               <Text style={styles.title}>{item.title}</Text>
               <Text style={styles.price}>${item.price} / month</Text>
               <Text style={styles.description}>{item.description}</Text>
+              <View style={styles.specsContainer}>
+                <View style={styles.specs}>
+                  <Icon name="map" size={20} color="#00ADEF" />
+                  <Text style={styles.specText}>{item.area} Area</Text>
+                </View>
+                <View style={styles.specs}>
+                  <Icon name="hotel" size={20} color="#00ADEF" />
+                  <Text style={styles.specText}>{item.rooms} Rooms</Text>
+                </View>
+                <View style={styles.specs}>
+                  <Icon name="kitchen" size={20} color="#00ADEF" />
+                  <Text style={styles.specText}>{item.kitchen} Kitchen</Text>
+                </View>
+                <View style={styles.specs}>
+                  <Icon name="bathtub" size={20} color="#00ADEF" />
+                  <Text style={styles.specText}>{item.washroom} Washrooms</Text>
+                </View>
+                <View style={styles.specs}>
+                  <Icon name="aspect-ratio" size={20} color="#00ADEF" />
+                  <Text style={styles.specText}>{item.size} sq. m</Text>
+                </View>
+              </View>
               <TouchableOpacity
                 style={styles.detailsButton}
                 onPress={() => handleDetailsPress(item)}
@@ -127,6 +149,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginBottom: 12,
+  },
+  specsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap', // Allow wrapping to the next line
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  specs: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '50%', // Set width for three specs in a row
+    marginBottom: 8, // Add some space below
+  },
+  specText: {
+    marginLeft: 5,
+    fontSize: 14,
+    color: '#333',
   },
   detailsButton: {
     backgroundColor: '#00ADEF',

@@ -2,7 +2,6 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, StatusBar, Dimensions, Image, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-
 import COLORS from '../consts/colors';
 
 const { width } = Dimensions.get('screen');
@@ -12,7 +11,6 @@ const ListingDetails = ({ route, navigation }) => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
-      {/* Customize status bar */}
       <StatusBar
         translucent={false}
         backgroundColor={COLORS.white}
@@ -27,31 +25,40 @@ const ListingDetails = ({ route, navigation }) => {
             <Text style={styles.title}>{item.title}</Text>
             <Text style={styles.price}>${item.price} / month</Text>
             <Text style={styles.description}>{item.description}</Text>
-            <Text style={styles.location}><Icon name="location-pin" size={20} color={COLORS.grey} /> {item.location}</Text>
+            {/* <Text style={styles.location}><Icon name="location-pin" size={20} color={COLORS.grey} /> {item.location}</Text> */}
             
             {/* Additional Details */}
             <View style={styles.facilitiesContainer}>
               <View style={styles.facility}>
                 <Icon name="hotel" size={18} />
-                <Text style={styles.facilityText}>2 Beds</Text>
+                <Text style={styles.facilityText}>{item.rooms} Rooms</Text>
+              </View>
+              <View style={styles.facility}>
+                <Icon name="kitchen" size={18} />
+                <Text style={styles.facilityText}>{item.kitchen} Kitchen</Text>
               </View>
               <View style={styles.facility}>
                 <Icon name="bathtub" size={18} />
-                <Text style={styles.facilityText}>2 Baths</Text>
+                <Text style={styles.facilityText}>{item.washroom} Washrooms</Text>
               </View>
               <View style={styles.facility}>
                 <Icon name="aspect-ratio" size={18} />
-                <Text style={styles.facilityText}>100m²</Text>
+                <Text style={styles.facilityText}>{item.size} m²</Text>
+              </View>
+              <View style={styles.facility}>
+                <Icon name="map" size={18} />
+                <Text style={styles.facilityText}>{item.area} Area</Text>
               </View>
             </View>
           </View>
+
           <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('Chats')}
-      >
-        <Text style={styles.buttonText}>Contact </Text>
-        <MaterialIcons name="arrow-forward-ios" size={22} color="#fff" />
-      </TouchableOpacity>
+            style={styles.button}
+            onPress={() => navigation.navigate('Chats')}
+          >
+            <Text style={styles.buttonText}>Contact</Text>
+            <MaterialIcons name="arrow-forward-ios" size={22} color="#fff" />
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -94,11 +101,13 @@ const styles = StyleSheet.create({
   facilitiesContainer: {
     flexDirection: 'row',
     marginTop: 20,
+    flexWrap: 'wrap', // Allow wrapping of facilities
   },
   facility: {
     flexDirection: 'row',
     alignItems: 'center',
     marginRight: 15,
+    marginBottom: 10,
   },
   facilityText: {
     marginLeft: 5,
@@ -108,7 +117,6 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: '#00ADEF',
     padding: 20,
-    // width: '90%',
     borderRadius: 10,
     marginBottom: 50,
     marginTop: 50,
