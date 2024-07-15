@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, Image, StyleSheet, Text } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import HomeScreen from './src/screens/Home';
@@ -16,10 +16,9 @@ import ChatRoom from './src/screens/ChatRoom';
 import TenantFinder from './src/screens/TenantFinder';
 import ListNewProperty from './src/screens/ListNewProperty';
 import ListedProperties from './src/screens/ListedProperties';
-// import UserDashboard from './src/screens/UserDashboard';
 import UserProfile from './src/screens/UserProfile';
-import ProfileScreen from './src/screens/UserProfile'; // Import ProfileScreen
-import EditProfileScreen from './src/screens/EditProfileScreen'; // Import EditProfileScreen
+import ProfileScreen from './src/screens/UserProfile'; 
+import EditProfileScreen from './src/screens/EditProfileScreen'; 
 import AddRental from './src/screens/AddRental';
 import EditListing from './src/screens/EditListing';
 import FavoritesScreen from './src/screens/FavoritesScreen';
@@ -27,7 +26,7 @@ import NotificationsScreen from './src/screens/NotificationsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import HelpAndSupportScreen from './src/screens/HelpAndSupportScreen';
 import ReviewsAndRatingsScreen from './src/screens/ReviewsAndRatingsScreen';
-
+import { UserProvider, UserContext } from './UserContext';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -55,8 +54,9 @@ function HomeStack() {
   );
 }
 
-
 function MainTabs() {
+  const { user } = useContext(UserContext);
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -70,9 +70,6 @@ function MainTabs() {
             case 'Chats':
               iconName = 'chat';
               break;
-            // case 'UserDashboard':
-            //   iconName = 'dashboard';
-            //   break;
             case 'Favorites':
               iconName = 'favorite';
               break;
@@ -89,92 +86,117 @@ function MainTabs() {
         tabBarInactiveTintColor: 'gray',
       })}
     >
-      <Tab.Screen name="HomeTab" component={HomeStack} options={{ title: 'Home' }} />
+      <Tab.Screen 
+        name="HomeTab" 
+        component={HomeStack} 
+        options={({ navigation }) => ({
+          headerTitle: () => (
+            <View style={styles.headerTitleContainer}>
+              <Text style={styles.headerTitleText}>Home</Text>
+              <TouchableOpacity 
+                style={styles.profileButton} 
+                onPress={() => navigation.navigate('Profile')}
+              >
+                <Image
+                  source={{ uri: user?.photoURL }}
+                  style={styles.profileImage}
+                />
+              </TouchableOpacity>
+            </View>
+          ),
+        })}
+      />
       <Tab.Screen name="Chats" component={Chats} />
-      {/* <Tab.Screen name="UserDashboard" component={UserDashboard} /> */}
       <Tab.Screen name="Favorites" component={FavoritesScreen} />
       <Tab.Screen name="Notifications" component={NotificationsScreen} />
     </Tab.Navigator>
   );
 }
 
-
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Welcome">
-        <Stack.Screen 
-          name="Welcome" 
-          component={WelcomeScreen} 
-          options={{ headerShown: false }} 
-        />
-        <Stack.Screen 
-          name="Registration" 
-          component={RegistrationScreen} 
-          options={{ title: 'Register' }} 
-        />
-        <Stack.Screen 
-          name="MainTabs" 
-          component={MainTabs} 
-          options={({ navigation }) => ({
-            headerRight: () => (
-              <TouchableOpacity 
-                style={styles.profileButton} 
-                onPress={() => navigation.navigate('Profile')}
-              >
-                <Image
-                  source={{ uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcShf-CEGBUxrY5nLQ-jAc8BG8tUO0GIw-4m6Q&s' }}
-                  style={styles.profileImage}
-                />
-              </TouchableOpacity>
-            ),
-            title: '',
-          })} 
-        />
-        <Stack.Screen 
-          name="UserProfile" 
-          component={UserProfile} 
-          options={{ title: 'Profile' }} 
-        />
-        <Stack.Screen 
-          name="Profile" 
-          component={ProfileScreen} 
-          options={{ title: 'Profile' }} 
-        />
-        <Stack.Screen 
-          name="EditProfile" 
-          component={EditProfileScreen} 
-          options={{ title: 'Edit Profile' }} 
-        />
-        <Stack.Screen 
-          name="Settings" 
-          component={SettingsScreen} 
-          options={{ title: 'Settings' }} 
-        />
-        <Stack.Screen 
-          name="HelpAndSupport" 
-          component={HelpAndSupportScreen} 
-          options={{ title: 'Help and Support' }} 
-        />
-        <Stack.Screen 
-          name="ReviewsAndRatings" 
-          component={ReviewsAndRatingsScreen} 
-          options={{ title: 'Reviews and Ratings' }} 
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <UserProvider> 
+      <NavigationContainer>
+        <MainNavigator />
+      </NavigationContainer>
+    </UserProvider> 
+  );
+}
+
+function MainNavigator() {
+  return (
+    <Stack.Navigator initialRouteName="Welcome">
+      <Stack.Screen 
+        name="Welcome" 
+        component={WelcomeScreen} 
+        options={{ headerShown: false }} 
+      />
+      <Stack.Screen 
+        name="Registration" 
+        component={RegistrationScreen} 
+        options={{ title: 'Register' }} 
+      />
+      <Stack.Screen 
+        name="MainTabs" 
+        component={MainTabs} 
+        options={{ title: '' }} 
+      />
+      <Stack.Screen 
+        name="UserProfile" 
+        component={UserProfile} 
+        options={{ title: 'Profile' }} 
+      />
+      <Stack.Screen 
+        name="Profile" 
+        component={ProfileScreen} 
+        options={{ title: 'Profile' }} 
+      />
+      <Stack.Screen 
+        name="EditProfile" 
+        component={EditProfileScreen} 
+        options={{ title: 'Edit Profile' }} 
+      />
+      <Stack.Screen 
+        name="Settings" 
+        component={SettingsScreen} 
+        options={{ title: 'Settings' }} 
+      />
+      <Stack.Screen 
+        name="HelpAndSupport" 
+        component={HelpAndSupportScreen} 
+        options={{ title: 'Help and Support' }} 
+      />
+      <Stack.Screen 
+        name="ReviewsAndRatings" 
+        component={ReviewsAndRatingsScreen} 
+        options={{ title: 'Reviews and Ratings' }} 
+      />
+    </Stack.Navigator>
   );
 }
 
 const styles = StyleSheet.create({
+  headerTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingTop: 10,
+    paddingBottom: 10,
+  },
+  headerTitleText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
   profileButton: {
-    marginRight: 16,
+    marginLeft: 'auto',
   },
   profileImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 25,
-    marginTop: 110,
+    width: 45,  // Increased width
+    height: 45, // Increased height
+    borderRadius: 25, // Adjusted for a circular image
+    marginBottom: 10,
+    marginTop: 10,
   },
 });
 

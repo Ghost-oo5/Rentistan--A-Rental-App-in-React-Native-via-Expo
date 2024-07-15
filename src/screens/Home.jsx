@@ -66,26 +66,29 @@ const Home = ({ navigation }) => {
               <Text style={styles.title}>{item.title}</Text>
               <Text style={styles.price}>${item.price} / month</Text>
               <Text style={styles.description}>{item.description}</Text>
+              <Text style={styles.postedBy}>Posted by: {item.postedBy}</Text>
               <View style={styles.specsContainer}>
-                <View style={styles.specs}>
-                  <Icon name="map" size={20} color="#00ADEF" />
-                  <Text style={styles.specText}>{item.area} Area</Text>
-                </View>
-                <View style={styles.specs}>
-                  <Icon name="hotel" size={20} color="#00ADEF" />
-                  <Text style={styles.specText}>{item.rooms} Rooms</Text>
-                </View>
-                <View style={styles.specs}>
-                  <Icon name="kitchen" size={20} color="#00ADEF" />
-                  <Text style={styles.specText}>{item.kitchen} Kitchen</Text>
-                </View>
-                <View style={styles.specs}>
-                  <Icon name="bathtub" size={20} color="#00ADEF" />
-                  <Text style={styles.specText}>{item.washroom} Washrooms</Text>
-                </View>
-                <View style={styles.specs}>
-                  <Icon name="aspect-ratio" size={20} color="#00ADEF" />
-                  <Text style={styles.specText}>{item.size} sq. m</Text>
+                <View style={styles.specRow}>
+                  <View style={styles.specs}>
+                    <Icon name="map" size={20} color="#00ADEF" />
+                    <Text style={styles.specText}>{item.area}</Text>
+                  </View>
+                  <View style={styles.specs}>
+                    <Icon name="hotel" size={20} color="#00ADEF" />
+                    <Text style={styles.specText}>{item.rooms} Rooms</Text>
+                  </View>
+                  <View style={styles.specs}>
+                    <Icon name="kitchen" size={20} color="#00ADEF" />
+                    <Text style={styles.specText}>{item.kitchen} Kitchen</Text>
+                  </View>
+                  <View style={styles.specs}>
+                    <Icon name="bathtub" size={20} color="#00ADEF" />
+                    <Text style={styles.specText}>{item.washroom} Washrooms</Text>
+                  </View>
+                  <View style={styles.specs}>
+                    <Icon name="aspect-ratio" size={20} color="#00ADEF" />
+                    <Text style={styles.specText}>{item.size} sq. m</Text>
+                  </View>
                 </View>
               </View>
               <TouchableOpacity
@@ -150,17 +153,25 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 12,
   },
-  specsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap', // Allow wrapping to the next line
-    justifyContent: 'space-between',
+  postedBy: {
+    fontSize: 14,
+    color: '#666',
     marginBottom: 12,
+    fontStyle: 'italic',
+  },
+  specsContainer: {
+    marginBottom: 12,
+  },
+  specRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap', // Allow wrapping of specs
+    justifyContent: 'flex-start', // Align items at the start
   },
   specs: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '50%', // Set width for three specs in a row
-    marginBottom: 8, // Add some space below
+    width: '50%', // Adjust the width as necessary
+    marginBottom: 10, // Add space between rows
   },
   specText: {
     marginLeft: 5,

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, TextInput, StyleSheet, Alert, Image, ScrollView, TouchableOpacity, Text } from 'react-native';
 import { FIRESTORE_DB } from '../../FirebaseConfig';
 import { collection, addDoc } from 'firebase/firestore';
 import * as ImagePicker from 'expo-image-picker';
+import { UserContext } from '../../UserContext'; // Import UserContext
 
 const AddRental = ({ navigation }) => {
   const [title, setTitle] = useState('');
@@ -15,6 +16,9 @@ const AddRental = ({ navigation }) => {
   const [size, setSize] = useState('');
   const [area, setArea] = useState('');
 
+
+  const { user } = useContext(UserContext); // Get current user info from context
+
   const handleAddRental = async () => {
     console.log("Title:", title);
     console.log("Image URI:", image);
@@ -25,7 +29,7 @@ const AddRental = ({ navigation }) => {
     console.log("Washroom:", washroom);
     console.log("Size:", size);
     console.log("Area:", area);
-
+  
     if (title && image && price && description && rooms && kitchen && washroom && size && area) {
       try {
         await addDoc(collection(FIRESTORE_DB, 'rentals'), {
@@ -38,6 +42,7 @@ const AddRental = ({ navigation }) => {
           washroom,
           size,
           area,
+          postedBy: user?.name || 'Anonymous', // Use 'name' instead of 'username'
         });
         Alert.alert('Success', 'Rental listing added successfully!');
         navigation.goBack();
@@ -49,6 +54,7 @@ const AddRental = ({ navigation }) => {
       Alert.alert('Error', 'Please fill all fields.');
     }
   };
+  
 
   const handleImageUpload = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
