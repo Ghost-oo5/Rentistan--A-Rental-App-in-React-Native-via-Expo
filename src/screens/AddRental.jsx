@@ -2,12 +2,13 @@ import React, { useState, useContext } from 'react';
 import { View, TextInput, StyleSheet, Alert, Image, ScrollView, TouchableOpacity, Text } from 'react-native';
 import { FIRESTORE_DB } from '../../FirebaseConfig';
 import { collection, addDoc } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import * as ImagePicker from 'expo-image-picker';
-import { UserContext } from '../../UserContext'; // Import UserContext
+import { UserContext } from '../../UserContext';
 
 const AddRental = ({ navigation }) => {
   const [title, setTitle] = useState('');
-  const [image, setImage] = useState(null);
+  const [images, setImages] = useState([]);
   const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
   const [rooms, setRooms] = useState('');
@@ -15,26 +16,26 @@ const AddRental = ({ navigation }) => {
   const [washroom, setWashroom] = useState('');
   const [size, setSize] = useState('');
   const [area, setArea] = useState('');
-
-
-  const { user } = useContext(UserContext); // Get current user info from context
+  const { user } = useContext(UserContext);
 
   const handleAddRental = async () => {
-    console.log("Title:", title);
-    console.log("Image URI:", image);
-    console.log("Price:", price);
-    console.log("Description:", description);
-    console.log("Rooms:", rooms);
-    console.log("Kitchen:", kitchen);
-    console.log("Washroom:", washroom);
-    console.log("Size:", size);
-    console.log("Area:", area);
-  
-    if (title && image && price && description && rooms && kitchen && washroom && size && area) {
+    if (title && images.length > 0 && price && description && rooms && kitchen && washroom && size && area) {
+      const imageUrls = [];
+      const storage = getStorage();
+
+      for (const image of images) {
+        const response = await fetch(image.uri);
+        const blob = await response.blob();
+        const storageRef = ref(storage, `rentals/${new Date().getTime()}_${image.filename}`);
+        await uploadBytes(storageRef, blob);
+        const url = await getDownloadURL(storageRef);
+        imageUrls.push(url);
+      }
+
       try {
         await addDoc(collection(FIRESTORE_DB, 'rentals'), {
           title,
-          image,
+          images: imageUrls,
           price,
           description,
           rooms,
@@ -42,7 +43,7 @@ const AddRental = ({ navigation }) => {
           washroom,
           size,
           area,
-          postedBy: user?.name || 'Anonymous', // Use 'name' instead of 'username'
+          postedBy: user?.name || 'Anonymous',
         });
         Alert.alert('Success', 'Rental listing added successfully!');
         navigation.goBack();
@@ -54,16 +55,14 @@ const AddRental = ({ navigation }) => {
       Alert.alert('Error', 'Please fill all fields.');
     }
   };
-  
 
   const handleImageUpload = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permissionResult.granted) {
-      const pickerResult = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true });
+      const pickerResult = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, allowsMultipleSelection: true });
       if (!pickerResult.cancelled && pickerResult.assets && pickerResult.assets.length > 0) {
-        const selectedImage = pickerResult.assets[0].uri; // Access the URI of the first asset
-        setImage(selectedImage);
-        console.log('Image URI:', selectedImage); // Log the URI for debugging
+        const selectedImages = pickerResult.assets.map(asset => ({ uri: asset.uri, filename: asset.fileName }));
+        setImages([...images, ...selectedImages]);
       }
     } else {
       Alert.alert("Permission needed", "You need to grant permission to access the library.");
@@ -79,9 +78,13 @@ const AddRental = ({ navigation }) => {
         onChangeText={setTitle}
       />
       <TouchableOpacity style={styles.uploadButton} onPress={handleImageUpload}>
-        <Text style={styles.buttonText}>Upload Image</Text>
+        <Text style={styles.buttonText}>Upload Images</Text>
       </TouchableOpacity>
-      {image && <Image source={{ uri: image }} style={styles.imagePreview} />}
+      <View style={styles.imageContainer}>
+        {images.map((image, index) => (
+          <Image key={index} source={{ uri: image.uri }} style={styles.imagePreview} />
+        ))}
+      </View>
       <TextInput
         style={styles.input}
         placeholder="Price"
@@ -148,11 +151,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     padding: 8,
   },
+  imageContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
   imagePreview: {
-    width: '100%',
-    height: 200,
-    marginVertical: 10,
-    borderRadius: 10,
+    width: 100,
+    height: 100,
+    margin: 5,
   },
   uploadButton: {
     backgroundColor: '#28A745',

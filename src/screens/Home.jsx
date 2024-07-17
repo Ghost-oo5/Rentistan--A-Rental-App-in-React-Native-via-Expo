@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { FIRESTORE_DB } from '../../FirebaseConfig';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { FAB, SearchBar } from 'react-native-elements';
+import Swiper from 'react-native-swiper';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+
+const { width: viewportWidth } = Dimensions.get('window');
 
 const Home = ({ navigation }) => {
   const [rentals, setRentals] = useState([]);
@@ -45,6 +48,72 @@ const Home = ({ navigation }) => {
     navigation.navigate('AddRental');
   };
 
+  const renderItem = ({ item }) => {
+    const hasImages = item.images && item.images.length > 0;
+    return (
+      <View style={styles.card}>
+        {hasImages ? (
+          item.images.length > 1 ? (
+            <Swiper
+              style={styles.swiper}
+              showsButtons={false}
+              autoplay
+              loop
+            >
+              {item.images.map((image, index) => (
+                <Image key={index} source={{ uri: image }} style={styles.image} />
+              ))}
+            </Swiper>
+          ) : (
+            <Image source={{ uri: item.images[0] }} style={styles.image} />
+          )
+        ) : (
+          <View style={styles.noImageContainer}>
+            <Text style={styles.noImageText}>No Image Available</Text>
+          </View>
+        )}
+        <View style={styles.info}>
+          <Text style={styles.title}>{item.title}</Text>
+          <Text style={styles.price}>${item.price} / month</Text>
+          <Text style={styles.description}>{item.description}</Text>
+          <Text style={styles.postedBy}>Posted by: {item.postedBy}</Text>
+          <View style={styles.specsContainer}>
+            <View style={styles.specRow}>
+              <View style={styles.specs}>
+                <Icon name="map" size={20} color="#00ADEF" />
+                <Text style={styles.specText}>Location: {item.area}</Text>
+              </View>
+              <View style={styles.specs}>
+                <Icon name="hotel" size={20} color="#00ADEF" />
+                <Text style={styles.specText}>{item.rooms} Rooms</Text>
+              </View>
+              <View style={styles.specs}>
+                <Icon name="kitchen" size={20} color="#00ADEF" />
+                <Text style={styles.specText}>{item.kitchen} Kitchen</Text>
+              </View>
+              <View style={styles.specs}>
+                <Icon name="bathtub" size={20} color="#00ADEF" />
+                <Text style={styles.specText}>{item.washroom} Washrooms</Text>
+              </View>
+              <View style={styles.specs}>
+                <Icon name="aspect-ratio" size={20} color="#00ADEF" />
+                <Text style={styles.specText}>{item.size} sq. m</Text>
+              </View>
+            </View>
+          </View>
+          <TouchableOpacity
+            style={styles.detailsButton}
+            onPress={() => handleDetailsPress(item)}
+          >
+            <Text style={styles.detailsButtonText}>Details</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
+  
+
+
   return (
     <View style={styles.container}>
       <SearchBar
@@ -59,47 +128,7 @@ const Home = ({ navigation }) => {
       <FlatList
         data={filteredRentals}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Image source={{ uri: item.image }} style={styles.image} />
-            <View style={styles.info}>
-              <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.price}>${item.price} / month</Text>
-              <Text style={styles.description}>{item.description}</Text>
-              <Text style={styles.postedBy}>Posted by: {item.postedBy}</Text>
-              <View style={styles.specsContainer}>
-                <View style={styles.specRow}>
-                  <View style={styles.specs}>
-                    <Icon name="map" size={20} color="#00ADEF" />
-                    <Text style={styles.specText}>{item.area}</Text>
-                  </View>
-                  <View style={styles.specs}>
-                    <Icon name="hotel" size={20} color="#00ADEF" />
-                    <Text style={styles.specText}>{item.rooms} Rooms</Text>
-                  </View>
-                  <View style={styles.specs}>
-                    <Icon name="kitchen" size={20} color="#00ADEF" />
-                    <Text style={styles.specText}>{item.kitchen} Kitchen</Text>
-                  </View>
-                  <View style={styles.specs}>
-                    <Icon name="bathtub" size={20} color="#00ADEF" />
-                    <Text style={styles.specText}>{item.washroom} Washrooms</Text>
-                  </View>
-                  <View style={styles.specs}>
-                    <Icon name="aspect-ratio" size={20} color="#00ADEF" />
-                    <Text style={styles.specText}>{item.size} sq. m</Text>
-                  </View>
-                </View>
-              </View>
-              <TouchableOpacity
-                style={styles.detailsButton}
-                onPress={() => handleDetailsPress(item)}
-              >
-                <Text style={styles.detailsButtonText}>Details</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
+        renderItem={renderItem}
       />
       <FAB
         placement="right"
@@ -130,10 +159,24 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 16,
   },
+  swiper: {
+    height: 250,
+  },
   image: {
     width: '100%',
-    height: 150,
+    height: 250,
     resizeMode: 'cover',
+  },
+  noImageContainer: {
+    width: '100%',
+    height: 150,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#e0e0e0',
+  },
+  noImageText: {
+    color: '#888',
+    fontSize: 16,
   },
   info: {
     padding: 16,
@@ -164,14 +207,14 @@ const styles = StyleSheet.create({
   },
   specRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap', // Allow wrapping of specs
-    justifyContent: 'flex-start', // Align items at the start
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
   },
   specs: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '50%', // Adjust the width as necessary
-    marginBottom: 10, // Add space between rows
+    width: '50%',
+    marginBottom: 10,
   },
   specText: {
     marginLeft: 5,

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, StatusBar, Dimensions, Image, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import Swiper from 'react-native-swiper'; // Import Swiper
 import COLORS from '../consts/colors';
 
 const { width } = Dimensions.get('screen');
@@ -19,7 +20,23 @@ const ListingDetails = ({ route, navigation }) => {
 
       <ScrollView>
         <View style={styles.container}>
-          <Image source={{ uri: item.image }} style={styles.image} />
+          {/* Swiper for Images */}
+          {item.images && item.images.length > 0 ? (
+            <Swiper
+              style={styles.swiper}
+              showsButtons={false}
+              autoplay
+              loop
+            >
+              {item.images.map((image, index) => (
+                <Image key={index} source={{ uri: image }} style={styles.image} />
+              ))}
+            </Swiper>
+          ) : (
+            <View style={styles.noImageContainer}>
+              <Text style={styles.noImageText}>No Images Available</Text>
+            </View>
+          )}
 
           <View style={styles.detailsContainer}>
             <Text style={styles.title}>{item.title}</Text>
@@ -69,10 +86,28 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
   },
+  swiper: {
+    height: width * 0.6,
+    borderRadius: 15,
+    overflow: 'hidden',
+  },
   image: {
     width: '100%',
+    height: width * 0.6,
+    resizeMode: 'cover',
+    borderRadius: 10,
+
+  },
+  noImageContainer: {
+    width: '100%',
     height: width * 0.8,
-    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#e0e0e0',
+  },
+  noImageText: {
+    color: '#888',
+    fontSize: 16,
   },
   detailsContainer: {
     marginTop: 20,
@@ -93,15 +128,10 @@ const styles = StyleSheet.create({
     color: COLORS.grey,
     marginVertical: 10,
   },
-  location: {
-    fontSize: 16,
-    color: COLORS.grey,
-    marginVertical: 10,
-  },
   facilitiesContainer: {
     flexDirection: 'row',
     marginTop: 20,
-    flexWrap: 'wrap', // Allow wrapping of facilities
+    flexWrap: 'wrap',
   },
   facility: {
     flexDirection: 'row',
