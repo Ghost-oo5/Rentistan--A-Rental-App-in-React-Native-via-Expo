@@ -42,6 +42,11 @@ const ListingDetails = ({ route, navigation }) => {
             <Text style={styles.title}>{item.title}</Text>
             <Text style={styles.price}>${item.price} / month</Text>
             <Text style={styles.description}>{item.description}</Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('ViewUserProfile', { userId: item.postedById })}
+            >
+              <Text style={styles.postedBy}>Posted by: {item.postedBy}</Text>
+            </TouchableOpacity>
             {/* <Text style={styles.location}><Icon name="location-pin" size={20} color={COLORS.grey} /> {item.location}</Text> */}
             
             {/* Additional Details */}
@@ -96,7 +101,6 @@ const styles = StyleSheet.create({
     height: width * 0.6,
     resizeMode: 'cover',
     borderRadius: 10,
-
   },
   noImageContainer: {
     width: '100%',
@@ -127,6 +131,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.grey,
     marginVertical: 10,
+  },
+  postedBy: {
+    fontSize: 14,
+    color: COLORS.grey,
+    marginVertical: 10,
+    fontStyle: 'italic',
   },
   facilitiesContainer: {
     flexDirection: 'row',
