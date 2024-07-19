@@ -44,6 +44,10 @@ const Home = ({ navigation }) => {
     navigation.navigate('ListingDetails', { item });
   };
 
+  const handleViewUserProfile = (userId) => {
+    navigation.navigate('ViewUserProfile', { userId });
+  };
+
   const handleFabPress = () => {
     navigation.navigate('AddRental');
   };
@@ -76,12 +80,14 @@ const Home = ({ navigation }) => {
           <Text style={styles.title}>{item.title}</Text>
           <Text style={styles.price}>${item.price} / month</Text>
           <Text style={styles.description}>{item.description}</Text>
-          <Text style={styles.postedBy}>Posted by: {item.postedBy}</Text>
+          <TouchableOpacity onPress={() => handleViewUserProfile(item.postedBy)}>
+            <Text style={styles.postedBy}>Posted by: {item.postedBy}</Text>
+          </TouchableOpacity>
           <View style={styles.specsContainer}>
             <View style={styles.specRow}>
               <View style={styles.specs}>
                 <Icon name="map" size={20} color="#00ADEF" />
-                <Text style={styles.specText}>Location: {item.area}</Text>
+                <Text style={styles.specText}>{item.area}</Text>
               </View>
               <View style={styles.specs}>
                 <Icon name="hotel" size={20} color="#00ADEF" />
@@ -111,8 +117,6 @@ const Home = ({ navigation }) => {
       </View>
     );
   };
-  
-
 
   return (
     <View style={styles.container}>

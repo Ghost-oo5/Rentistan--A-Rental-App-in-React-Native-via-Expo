@@ -27,6 +27,7 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import HelpAndSupportScreen from './src/screens/HelpAndSupportScreen';
 import ReviewsAndRatingsScreen from './src/screens/ReviewsAndRatingsScreen';
 import { UserProvider, UserContext } from './UserContext';
+import ViewUserProfile from './src/screens/ViewUserProfile'; // New ViewUserProfile screen
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -50,6 +51,7 @@ function HomeStack() {
       <Stack.Screen name="ListedProperties" component={ListedProperties} />
       <Stack.Screen name="AddRental" component={AddRental} /> 
       <Stack.Screen name='EditProfileScreen' component={EditProfileScreen} />
+      <Stack.Screen name="ViewUserProfile" component={ViewUserProfile} /> 
     </Stack.Navigator>
   );
 }

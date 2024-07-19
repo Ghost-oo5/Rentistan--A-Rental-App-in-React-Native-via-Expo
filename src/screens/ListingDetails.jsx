@@ -58,10 +58,9 @@ const ListingDetails = ({ route, navigation }) => {
             <Text style={styles.title}>{item.title}</Text>
             <Text style={styles.price}>${item.price} / month</Text>
             <Text style={styles.description}>{item.description}</Text>
-            <TouchableOpacity onPress={handleUsernameClick}>
-              <Text style={styles.ownerName}>{item.ownerName}</Text>
-            </TouchableOpacity>
-
+            {/* <Text style={styles.location}><Icon name="location-pin" size={20} color={COLORS.grey} /> {item.location}</Text> */}
+            
+            {/* Additional Details */}
             <View style={styles.facilitiesContainer}>
               <View style={styles.facility}>
                 <Icon name="hotel" size={18} />
@@ -139,12 +138,6 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 16,
     color: COLORS.grey,
-    marginVertical: 10,
-  },
-  ownerName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.blue,
     marginVertical: 10,
   },
   facilitiesContainer: {
