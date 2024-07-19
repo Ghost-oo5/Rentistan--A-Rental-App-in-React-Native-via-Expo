@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { FIRESTORE_DB } from '../../FirebaseConfig';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { FAB, SearchBar } from 'react-native-elements';
 import Swiper from 'react-native-swiper';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -10,16 +10,34 @@ const { width: viewportWidth } = Dimensions.get('window');
 
 const Home = ({ navigation }) => {
   const [rentals, setRentals] = useState([]);
+  const [users, setUsers] = useState({});
   const [search, setSearch] = useState('');
   const [filteredRentals, setFilteredRentals] = useState([]);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(FIRESTORE_DB, 'rentals'), (snapshot) => {
-      const rentalList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+    const fetchUserData = async (userId) => {
+      const userDoc = await getDoc(doc(FIRESTORE_DB, 'users', userId));
+      if (userDoc.exists()) {
+        return userDoc.data();
+      } else {
+        console.error(`User not found for ID: ${userId}`);
+        return { name: 'Unknown User' };
+      }
+    };
+
+    const unsubscribe = onSnapshot(collection(FIRESTORE_DB, 'rentals'), async (snapshot) => {
+      const rentalList = [];
+      const userMap = {};
+      for (const docSnapshot of snapshot.docs) {
+        const rentalData = { id: docSnapshot.id, ...docSnapshot.data() };
+        rentalList.push(rentalData);
+        if (!userMap[rentalData.postedBy]) {
+          const userData = await fetchUserData(rentalData.postedBy);
+          userMap[rentalData.postedBy] = userData;
+        }
+      }
       setRentals(rentalList);
+      setUsers(userMap);
       setFilteredRentals(rentalList);
     }, (error) => {
       console.error('Error fetching rentals: ', error);
@@ -45,6 +63,7 @@ const Home = ({ navigation }) => {
   };
 
   const handleViewUserProfile = (userId) => {
+    console.log('Navigating to ViewUserProfile with userId:', userId);
     navigation.navigate('ViewUserProfile', { userId });
   };
 
@@ -54,6 +73,7 @@ const Home = ({ navigation }) => {
 
   const renderItem = ({ item }) => {
     const hasImages = item.images && item.images.length > 0;
+    const userName = users[item.postedBy]?.name || 'Loading...';
     return (
       <View style={styles.card}>
         {hasImages ? (
@@ -81,7 +101,7 @@ const Home = ({ navigation }) => {
           <Text style={styles.price}>${item.price} / month</Text>
           <Text style={styles.description}>{item.description}</Text>
           <TouchableOpacity onPress={() => handleViewUserProfile(item.postedBy)}>
-            <Text style={styles.postedBy}>Posted by: {item.postedBy}</Text>
+            <Text style={styles.postedBy}>Posted by: {userName}</Text>
           </TouchableOpacity>
           <View style={styles.specsContainer}>
             <View style={styles.specRow}>
@@ -198,43 +218,43 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   postedBy: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
-    fontStyle: 'italic',
+    color: '#00ADEF',
+    marginBottom: 8,
+    textDecorationLine: 'underline',
   },
   specsContainer: {
-    marginBottom: 12,
+    marginBottom: 8,
   },
   specRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'flex-start',
   },
   specs: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '50%',
-    marginBottom: 10,
+    marginRight: 16,
+    marginBottom: 8,
   },
   specText: {
-    marginLeft: 5,
+    marginLeft: 4,
     fontSize: 14,
-    color: '#333',
+    color: '#666',
   },
   detailsButton: {
-    backgroundColor: '#00ADEF',
-    padding: 10,
-    borderRadius: 6,
-    alignItems: 'center',
     marginTop: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: '#00ADEF',
+    borderRadius: 4,
+    alignItems: 'center',
   },
   detailsButtonText: {
-    color: '#fff',
-    fontSize: 16,
+    color: 'white',
+    fontSize: 14,
     fontWeight: 'bold',
   },
 });

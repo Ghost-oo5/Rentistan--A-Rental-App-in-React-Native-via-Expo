@@ -43,7 +43,8 @@ const AddRental = ({ navigation }) => {
           washroom,
           size,
           area,
-          postedBy: user?.name || 'Anonymous',
+          postedBy: user?.id || 'Anonymous',
+          postedByName: user?.name || 'Anonymous', // Include the user's name here
         });
         Alert.alert('Success', 'Rental listing added successfully!');
         navigation.goBack();

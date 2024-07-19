@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { doc, getDoc } from 'firebase/firestore';
-import { FIRESTORE_DB } from '../../FirebaseConfig'; // Adjust the import based on your project structure
+import { FIRESTORE_DB } from '../../FirebaseConfig';
 
 const ViewUserProfile = () => {
   const route = useRoute();
@@ -19,18 +19,22 @@ const ViewUserProfile = () => {
       return;
     }
 
+    console.log('Fetching details for userId:', userId);
+
     const fetchUserDetails = async () => {
       try {
         const userDocRef = doc(FIRESTORE_DB, 'users', userId);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
+          // console.log('User data:', userDoc.data());
           setUserDetails(userDoc.data());
         } else {
+          console.log('User not found for userId:', userId);
           setError('User not found');
         }
       } catch (err) {
+        console.error('Error fetching user details:', err);
         setError('Error fetching user details');
-        console.log(err);
       } finally {
         setLoading(false);
       }
@@ -59,7 +63,8 @@ const ViewUserProfile = () => {
     <View style={styles.container}>
       <Text style={styles.name}>{userDetails.name}</Text>
       <Text style={styles.email}>{userDetails.email}</Text>
-      {/* Add more user details as needed */}
+      <Text style={styles.address}>{userDetails.address}</Text>
+      <Text style={styles.contactNumber}>{userDetails.contactNumber}</Text>
     </View>
   );
 };
@@ -76,6 +81,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   email: {
+    fontSize: 18,
+    color: '#666',
+  },
+  address: {
+    fontSize: 18,
+    color: '#666',
+  },
+  contactNumber: {
     fontSize: 18,
     color: '#666',
   },
