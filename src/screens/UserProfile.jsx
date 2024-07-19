@@ -164,7 +164,9 @@ const ProfileScreen = () => {
           <TouchableOpacity style={styles.editIconContainer} onPress={handleImageUpload}>
             <Icon name="edit" color="#00ADEF" />
           </TouchableOpacity>
-          <Text h4 style={styles.username}>{userProfile.displayName}</Text>
+          <TouchableOpacity onPress={handleUsernameClick}>
+            <Text h4 style={styles.username}>{userProfile.displayName}</Text>
+          </TouchableOpacity>
           <Text style={styles.email}>{userProfile.email}</Text>
         </>
       )}
@@ -186,6 +188,12 @@ const ProfileScreen = () => {
       </View>
     </View>
   );
+  
+  // Function to handle username click
+  const handleUsernameClick = () => {
+    navigation.navigate('UserProfile', { userId: userProfile.uid }); // Adjust navigation to your user profile route
+  };
+  
   
 
   const renderListingItem = ({ item }) => (

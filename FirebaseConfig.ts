@@ -1,4 +1,4 @@
-// FirebaseConfig.js
+// firebaseConfig.js
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, initializeAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
