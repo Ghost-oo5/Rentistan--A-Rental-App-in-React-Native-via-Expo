@@ -1,32 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { FIREBASE_APP, FIREBASE_Auth, FIRESTORE_DB, FIREBASE_STORAGE } from '../../FirebaseConfig';
+import { collection, onSnapshot } from 'firebase/firestore';
 
 const MainChatScreen = ({ navigation }) => {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Dummy data for conversations (replace with actual data or API integration)
-  const initialConversations = [
-    { id: '1', userName: 'John Doe', lastMessage: 'Hello!', unreadCount: 2 },
-    { id: '2', userName: 'Jane Smith', lastMessage: 'Hi there!', unreadCount: 0 },
-    { id: '3', userName: 'Michael Johnson', lastMessage: 'How are you?', unreadCount: 1 },
-    { id: '4', userName: 'Emma Brown', lastMessage: 'See you later!', unreadCount: 0 },
-    // Add more conversations as needed
-  ];
-
   useEffect(() => {
-    // Simulating API call to fetch conversations
-    // Replace with actual API call
-    setTimeout(() => {
-      setConversations(initialConversations);
+    const unsubscribe = onSnapshot(collection(FIRESTORE_DB, 'chats'), (querySnapshot) => {
+      const conversations = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setConversations(conversations);
       setLoading(false);
-    }, 1000);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const navigateToChat = (conversation) => {
-    // Navigate to individual chat screen with conversation details
-    navigation.navigate('ChatRoom', { conversation }); // Ensure the screen name matches the one in your navigator
+    navigation.navigate('ChatRoom', { conversation });
   };
 
   const renderItem = ({ item }) => (

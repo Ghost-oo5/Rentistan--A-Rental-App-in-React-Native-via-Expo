@@ -1,14 +1,36 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, StatusBar, Dimensions, Image, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  SafeAreaView,
+  StatusBar,
+  Dimensions,
+  Image,
+  TouchableOpacity
+} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import Swiper from 'react-native-swiper'; // Import Swiper
+import Swiper from 'react-native-swiper';
 import COLORS from '../consts/colors';
 
 const { width } = Dimensions.get('screen');
 
 const ListingDetails = ({ route, navigation }) => {
   const { item } = route.params;
+
+  const handleContactClick = () => {
+    const conversation = {
+      id: item.ownerId,
+      userName: item.ownerName,
+    };
+    navigation.navigate('ChatRoom', { conversation });
+  };
+
+  const handleUsernameClick = () => {
+    navigation.navigate('UserProfile', { userId: item.ownerId });
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
@@ -20,14 +42,8 @@ const ListingDetails = ({ route, navigation }) => {
 
       <ScrollView>
         <View style={styles.container}>
-          {/* Swiper for Images */}
           {item.images && item.images.length > 0 ? (
-            <Swiper
-              style={styles.swiper}
-              showsButtons={false}
-              autoplay
-              loop
-            >
+            <Swiper style={styles.swiper} showsButtons={false} autoplay loop>
               {item.images.map((image, index) => (
                 <Image key={index} source={{ uri: image }} style={styles.image} />
               ))}
@@ -42,11 +58,6 @@ const ListingDetails = ({ route, navigation }) => {
             <Text style={styles.title}>{item.title}</Text>
             <Text style={styles.price}>${item.price} / month</Text>
             <Text style={styles.description}>{item.description}</Text>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('ViewUserProfile', { userId: item.postedById })}
-            >
-              <Text style={styles.postedBy}>Posted by: {item.postedBy}</Text>
-            </TouchableOpacity>
             {/* <Text style={styles.location}><Icon name="location-pin" size={20} color={COLORS.grey} /> {item.location}</Text> */}
             
             {/* Additional Details */}
@@ -74,10 +85,7 @@ const ListingDetails = ({ route, navigation }) => {
             </View>
           </View>
 
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => navigation.navigate('Chats')}
-          >
+          <TouchableOpacity style={styles.button} onPress={handleContactClick}>
             <Text style={styles.buttonText}>Contact</Text>
             <MaterialIcons name="arrow-forward-ios" size={22} color="#fff" />
           </TouchableOpacity>
@@ -131,12 +139,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.grey,
     marginVertical: 10,
-  },
-  postedBy: {
-    fontSize: 14,
-    color: COLORS.grey,
-    marginVertical: 10,
-    fontStyle: 'italic',
   },
   facilitiesContainer: {
     flexDirection: 'row',

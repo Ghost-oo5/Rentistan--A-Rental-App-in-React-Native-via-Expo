@@ -1,39 +1,68 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
+import firestore from '@react-native-firebase/firestore';
 
 const ChatRoom = ({ route }) => {
   const { conversation } = route.params;
-
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
 
-  // Dummy data for messages (replace with actual data or API integration)
-  const initialMessages = [
-    { id: '1', text: 'Hello!', sender: 'user' },
-    { id: '2', text: 'Hi there!', sender: 'agent' },
-    { id: '3', text: 'How can I help you today?', sender: 'agent' },
-  ];
-
   useEffect(() => {
-    setMessages(initialMessages);
+    const unsubscribe = firestore()
+      .collection('chats')
+      .doc(conversation.id)
+      .collection('messages')
+      .orderBy('createdAt', 'desc')
+      .onSnapshot(querySnapshot => {
+        const messages = querySnapshot.docs.map(doc => {
+          const firebaseData = doc.data();
+
+          const data = {
+            _id: doc.id,
+            text: '',
+            createdAt: new Date().getTime(),
+            ...firebaseData
+          };
+
+          if (!firebaseData.system) {
+            data.user = {
+              ...firebaseData.user,
+              name: firebaseData.user.name || 'User'
+            };
+          }
+
+          return data;
+        });
+
+        setMessages(messages);
+      });
+
+    return () => unsubscribe();
   }, []);
 
   const sendMessage = () => {
     if (inputMessage.trim() === '') return;
 
-    const newMessage = { id: String(messages.length + 1), text: inputMessage, sender: 'user' };
-    setMessages([...messages, newMessage]);
+    const newMessage = {
+      text: inputMessage,
+      createdAt: new Date().getTime(),
+      user: {
+        _id: 'user', // Replace with actual user ID
+        name: 'User' // Replace with actual user name
+      }
+    };
+
+    firestore()
+      .collection('chats')
+      .doc(conversation.id)
+      .collection('messages')
+      .add(newMessage);
+
     setInputMessage('');
-    
-    // Simulate agent's reply (replace with actual logic)
-    setTimeout(() => {
-      const replyMessage = { id: String(messages.length + 2), text: 'I will assist you shortly.', sender: 'agent' };
-      setMessages(prevMessages => [...prevMessages, replyMessage]);
-    }, 1000); // Simulate delay
   };
 
   const renderItem = ({ item }) => (
-    <View style={[styles.messageBubble, item.sender === 'user' ? styles.userBubble : styles.agentBubble]}>
+    <View style={[styles.messageBubble, item.user._id === 'user' ? styles.userBubble : styles.agentBubble]}>
       <Text style={styles.messageText}>{item.text}</Text>
     </View>
   );
@@ -44,9 +73,9 @@ const ChatRoom = ({ route }) => {
       <FlatList
         data={messages}
         renderItem={renderItem}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item._id}
         style={styles.messageList}
-        inverted // Start displaying messages from bottom
+        inverted
       />
       <View style={styles.inputContainer}>
         <TextInput
