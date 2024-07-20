@@ -11,7 +11,7 @@ import SearchResult from './src/screens/SearchResult';
 import Filter from './src/screens/Filter';
 import ListingDetails from './src/screens/ListingDetails';
 import Checkout from './src/screens/Checkout';
-import Chats from './src/screens/Chats';
+import MainChatScreen from './src/screens/MainChatScreen';
 import ChatRoom from './src/screens/ChatRoom';
 import TenantFinder from './src/screens/TenantFinder';
 import ListNewProperty from './src/screens/ListNewProperty';
@@ -28,6 +28,7 @@ import HelpAndSupportScreen from './src/screens/HelpAndSupportScreen';
 import ReviewsAndRatingsScreen from './src/screens/ReviewsAndRatingsScreen';
 import { UserProvider, UserContext } from './UserContext';
 import ViewUserProfile from './src/screens/ViewUserProfile'; // New ViewUserProfile screen
+import UserSelectionScreen from './src/screens/UserSelectionScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -45,13 +46,14 @@ function HomeStack() {
       <Stack.Screen name="ListingDetails" component={ListingDetails} />
       <Stack.Screen name="EditListing" component={EditListing} />
       <Stack.Screen name="Checkout" component={Checkout} />
-      <Stack.Screen name="ChatRoom" component={ChatRoom} />
+      <Stack.Screen name="ChatRoom" component={ChatRoom} options={{ headerShown: false }} />
       <Stack.Screen name="TenantFinder" component={TenantFinder} />
       <Stack.Screen name="ListNewProperty" component={ListNewProperty} />
       <Stack.Screen name="ListedProperties" component={ListedProperties} />
       <Stack.Screen name="AddRental" component={AddRental} /> 
       <Stack.Screen name='EditProfileScreen' component={EditProfileScreen} />
       <Stack.Screen name="ViewUserProfile" component={ViewUserProfile} /> 
+      <Stack.Screen name="UserSelectionScreen" component={UserSelectionScreen} />
     </Stack.Navigator>
   );
 }
@@ -69,7 +71,7 @@ function MainTabs() {
             case 'HomeTab':
               iconName = 'home';
               break;
-            case 'Chats':
+            case 'MainChatScreen':
               iconName = 'chat';
               break;
             case 'Favorites':
@@ -108,7 +110,7 @@ function MainTabs() {
           ),
         })}
       />
-      <Tab.Screen name="Chats" component={Chats} />
+      <Tab.Screen name="MainChatScreen" component={MainChatScreen} />
       <Tab.Screen name="Favorites" component={FavoritesScreen} />
       <Tab.Screen name="Notifications" component={NotificationsScreen} />
     </Tab.Navigator>

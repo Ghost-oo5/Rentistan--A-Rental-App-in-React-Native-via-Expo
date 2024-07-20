@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { FIREBASE_APP, FIREBASE_Auth, FIRESTORE_DB, FIREBASE_STORAGE } from '../../FirebaseConfig';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Button } from 'react-native';
+import { FIRESTORE_DB } from '../../FirebaseConfig';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 
 const MainChatScreen = ({ navigation }) => {
   const [conversations, setConversations] = useState([]);
@@ -9,12 +9,26 @@ const MainChatScreen = ({ navigation }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(FIRESTORE_DB, 'chats'), (querySnapshot) => {
-      const conversations = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setConversations(conversations);
+    console.log('MainChatScreen mounted');
+    const q = query(collection(FIRESTORE_DB, 'chats'));
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      try {
+        const conversations = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setConversations(conversations);
+        setLoading(false);
+        console.log('Fetched conversations:', conversations);
+      } catch (error) {
+        console.error("Error fetching conversations: ", error);
+        setError("Failed to load conversations.");
+        setLoading(false);
+      }
+    }, (error) => {
+      console.error("Snapshot error: ", error);
+      setError("Failed to load conversations.");
       setLoading(false);
     });
 
@@ -22,13 +36,29 @@ const MainChatScreen = ({ navigation }) => {
   }, []);
 
   const navigateToChat = (conversation) => {
-    navigation.navigate('ChatRoom', { conversation });
+    navigation.navigate('ChatRoom', {
+      conversation: {
+        id: conversation.id,
+        senderId: conversation.senderId,
+        receiverId: conversation.receiverId,
+        senderName: conversation.senderName,
+        receiverName: conversation.receiverName,
+        lastMessage: conversation.lastMessage,
+        unreadCount: conversation.unreadCount,
+        messages: conversation.messages,
+        participants: conversation.participants,
+      },
+    });
+  };
+
+  const navigateToUserSelection = () => {
+    navigation.navigate('UserSelectionScreen');
   };
 
   const renderItem = ({ item }) => (
     <TouchableOpacity style={styles.itemContainer} onPress={() => navigateToChat(item)}>
-      <Text style={styles.userName}>{item.userName}</Text>
-      <Text style={styles.lastMessage}>{item.lastMessage}</Text>
+      <Text style={styles.userName}>{item.receiverName || 'No Name'}</Text>
+      <Text style={styles.lastMessage}>{item.lastMessage || 'No Messages'}</Text>
       {item.unreadCount > 0 && (
         <View style={styles.unreadBadge}>
           <Text style={styles.unreadText}>{item.unreadCount}</Text>
@@ -41,6 +71,7 @@ const MainChatScreen = ({ navigation }) => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#00ADEF" />
+        <Text style={styles.loadingText}>Loading conversations...</Text>
       </View>
     );
   }
@@ -48,18 +79,20 @@ const MainChatScreen = ({ navigation }) => {
   if (error) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Failed to load conversations.</Text>
+        <Text style={styles.errorText}>{error}</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      <Button title="Start Chat" onPress={navigateToUserSelection} />
       <FlatList
         data={conversations}
         renderItem={renderItem}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContainer}
+        ListEmptyComponent={<Text>No conversations available</Text>}
       />
     </View>
   );
@@ -69,11 +102,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f0f0f0',
+    padding: 10,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#333',
+    marginTop: 10,
   },
   errorContainer: {
     flex: 1,
@@ -81,8 +120,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    color: 'red',
     fontSize: 16,
+    color: 'red',
   },
   listContainer: {
     paddingVertical: 10,
@@ -99,6 +138,7 @@ const styles = StyleSheet.create({
   userName: {
     fontWeight: 'bold',
     fontSize: 16,
+    color: '#333',
     flex: 1,
   },
   lastMessage: {
@@ -110,6 +150,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 8,
     paddingVertical: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   unreadText: {
     color: '#fff',

@@ -1,107 +1,178 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
-import firestore from '@react-native-firebase/firestore';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, ImageBackground, Image } from 'react-native';
+import { FIRESTORE_DB, FIREBASE_Auth } from '../../FirebaseConfig';
+import { collection, addDoc, onSnapshot, orderBy, doc, getDoc, updateDoc, query } from 'firebase/firestore';
+import { format } from 'date-fns';
 
-const ChatRoom = ({ route }) => {
-  const { conversation } = route.params;
+const ChatRoom = ({ route, navigation }) => {
+  const { conversation } = route.params || {};
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [userNames, setUserNames] = useState({});
+  const [userPhotos, setUserPhotos] = useState({});
+
+  const auth = FIREBASE_Auth;
+  const user = auth.currentUser;
+  const senderId = user?.uid;
+  const senderName = user?.displayName || 'User';
+
+  const fetchUserNamesAndPhotos = async () => {
+    try {
+      const userIds = [conversation.senderId, conversation.receiverId];
+      const userNamesMap = {};
+      const userPhotosMap = {};
+
+      for (const userId of userIds) {
+        const userRef = doc(FIRESTORE_DB, 'users', userId);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          userNamesMap[userId] = userSnap.data().name;
+          userPhotosMap[userId] = userSnap.data().photoURL;
+        }
+      }
+
+      setUserNames(userNamesMap);
+      setUserPhotos(userPhotosMap);
+    } catch (error) {
+      console.error("Error fetching user names: ", error);
+      setError("Failed to load user names.");
+    }
+  };
 
   useEffect(() => {
-    const unsubscribe = firestore()
-      .collection('chats')
-      .doc(conversation.id)
-      .collection('messages')
-      .orderBy('createdAt', 'desc')
-      .onSnapshot(querySnapshot => {
+    if (!conversation || !conversation.id) {
+      setError('Invalid conversation data');
+      setLoading(false);
+      return;
+    }
+
+    fetchUserNamesAndPhotos();
+
+    const q = query(
+      collection(FIRESTORE_DB, 'chats', conversation.id, 'messages'),
+      orderBy('createdAt', 'asc')
+    );
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      try {
         const messages = querySnapshot.docs.map(doc => {
-          const firebaseData = doc.data();
-
-          const data = {
+          const data = doc.data();
+          return {
             _id: doc.id,
-            text: '',
-            createdAt: new Date().getTime(),
-            ...firebaseData
+            text: data.text,
+            createdAt: data.createdAt?.toDate() || new Date(),
+            user: {
+              _id: data.user._id,
+              name: userNames[data.user._id] || 'Unknown User',
+              photoURL: userPhotos[data.user._id] || null,
+            },
           };
-
-          if (!firebaseData.system) {
-            data.user = {
-              ...firebaseData.user,
-              name: firebaseData.user.name || 'User'
-            };
-          }
-
-          return data;
         });
 
         setMessages(messages);
-      });
+      } catch (error) {
+        console.error("Error fetching messages: ", error);
+        setError("Failed to load messages.");
+      } finally {
+        setLoading(false);
+      }
+    }, (error) => {
+      console.error("Snapshot error: ", error);
+      setError("Failed to load messages.");
+      setLoading(false);
+    });
 
     return () => unsubscribe();
-  }, []);
+  }, [conversation?.id, userNames, userPhotos]);
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (inputMessage.trim() === '') return;
 
     const newMessage = {
       text: inputMessage,
-      createdAt: new Date().getTime(),
+      createdAt: new Date(),
       user: {
-        _id: 'user', // Replace with actual user ID
-        name: 'User' // Replace with actual user name
-      }
+        _id: senderId,
+        name: senderName,
+      },
     };
 
-    firestore()
-      .collection('chats')
-      .doc(conversation.id)
-      .collection('messages')
-      .add(newMessage);
+    try {
+      await addDoc(collection(FIRESTORE_DB, 'chats', conversation.id, 'messages'), newMessage);
 
-    setInputMessage('');
+      const conversationDocRef = doc(FIRESTORE_DB, 'chats', conversation.id);
+      await updateDoc(conversationDocRef, {
+        lastMessage: inputMessage,
+        lastMessageTime: new Date(),
+      });
+
+      setInputMessage('');
+    } catch (error) {
+      console.error("Error sending message: ", error);
+      setError("Failed to send message.");
+    }
   };
 
   const renderItem = ({ item }) => (
-    <View style={[styles.messageBubble, item.user._id === 'user' ? styles.userBubble : styles.agentBubble]}>
+    <View style={[styles.messageBubble, item.user._id === senderId ? styles.userBubble : styles.agentBubble]}>
       <Text style={styles.messageText}>{item.text}</Text>
+      <Text style={styles.messageTime}>{format(item.createdAt, 'p')}</Text>
     </View>
   );
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.userName}>{conversation.userName}</Text>
-      <FlatList
-        data={messages}
-        renderItem={renderItem}
-        keyExtractor={item => item._id}
-        style={styles.messageList}
-        inverted
-      />
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={inputMessage}
-          onChangeText={setInputMessage}
-          placeholder="Type your message..."
-        />
-        <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-          <Text style={styles.sendButtonText}>Send</Text>
-        </TouchableOpacity>
+  const handleProfilePictureClick = (userId) => {
+    navigation.navigate('ViewUserProfile', { userId });
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading...</Text>
       </View>
-    </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
+  }
+
+  return (
+    <ImageBackground source={require('../assets/bg.jpg')} style={styles.background}>
+      <View style={styles.container}>
+        <FlatList
+          data={messages}
+          renderItem={renderItem}
+          keyExtractor={item => item._id}
+          style={styles.messageList}
+        />
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            value={inputMessage}
+            onChangeText={setInputMessage}
+            placeholder="Type your message..."
+          />
+          <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
+            <Text style={styles.sendButtonText}>Send</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
-  },
-  userName: {
-    fontWeight: 'bold',
-    fontSize: 24,
-    padding: 20,
-    backgroundColor: '#fff',
   },
   messageList: {
     flex: 1,
@@ -124,6 +195,12 @@ const styles = StyleSheet.create({
   },
   messageText: {
     color: '#fff',
+  },
+  messageTime: {
+    color: '#fff',
+    fontSize: 10,
+    marginTop: 5,
+    alignSelf: 'flex-end',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -152,6 +229,12 @@ const styles = StyleSheet.create({
   sendButtonText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 20,
   },
 });
 
