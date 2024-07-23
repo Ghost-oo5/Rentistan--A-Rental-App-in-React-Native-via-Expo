@@ -14,7 +14,6 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome'; // Import FontAwesome for WhatsApp icon
 import Swiper from 'react-native-swiper';
-import COLORS from '../consts/colors';
 import { FIRESTORE_DB } from '../../FirebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 
@@ -29,6 +28,8 @@ const ListingDetails = ({ route, navigation }) => {
     whatsappNumber: '',
     photoURL: ''
   });
+
+  const [availability, setAvailability] = useState('Loading...'); // Add state for availability
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -52,8 +53,17 @@ const ListingDetails = ({ route, navigation }) => {
             photoURL: ''
           });
         }
+
+        // Fetch availability status from the rental item document
+        const listingDoc = await getDoc(doc(FIRESTORE_DB, 'rentals', item.id));
+        if (listingDoc.exists()) {
+          const listingData = listingDoc.data();
+          setAvailability(listingData.availability || 'Unknown Status');
+        } else {
+          setAvailability('Unknown Status');
+        }
       } catch (error) {
-        console.error('Error fetching user data: ', error);
+        console.error('Error fetching data: ', error);
         setUserProfile({
           name: 'Error fetching user',
           contactNumber: '',
@@ -61,11 +71,12 @@ const ListingDetails = ({ route, navigation }) => {
           whatsappNumber: '',
           photoURL: ''
         });
+        setAvailability('Error fetching status');
       }
     };
 
     fetchUserData();
-  }, [item.postedBy]);
+  }, [item.postedBy, item.id]);
 
   const handleChatClick = () => {
     const conversation = {
@@ -76,16 +87,28 @@ const ListingDetails = ({ route, navigation }) => {
   };
 
   const handleCallClick = () => {
-    Linking.openURL(`tel:${userProfile.contactNumber}`);
+    if (userProfile.contactNumber) {
+      Linking.openURL(`tel:${userProfile.contactNumber}`);
+    } else {
+      alert('Contact number not available');
+    }
   };
 
   const handleWhatsAppClick = () => {
-    const message = `Hello, I'm interested in your rental listing: ${item.title}`;
-    Linking.openURL(`whatsapp://send?phone=${userProfile.whatsappNumber}&text=${message}`);
+    if (userProfile.whatsappNumber) {
+      const message = `Hello, I'm interested in your rental listing: ${item.title}`;
+      Linking.openURL(`whatsapp://send?phone=${userProfile.whatsappNumber}&text=${message}`);
+    } else {
+      alert('WhatsApp number not available');
+    }
   };
 
   const handleEmailClick = () => {
-    Linking.openURL(`mailto:${userProfile.email}?subject=Rental Inquiry: ${item.title}`);
+    if (userProfile.email) {
+      Linking.openURL(`mailto:${userProfile.email}?subject=Rental Inquiry: ${item.title}`);
+    } else {
+      alert('Email not available');
+    }
   };
 
   const handleOwnerProfileClick = () => {
@@ -93,10 +116,10 @@ const ListingDetails = ({ route, navigation }) => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
       <StatusBar
         translucent={false}
-        backgroundColor={COLORS.white}
+        backgroundColor="#fff"
         barStyle="dark-content"
       />
       <ScrollView>
@@ -115,8 +138,17 @@ const ListingDetails = ({ route, navigation }) => {
 
           <View style={styles.detailsContainer}>
             <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.price}>${item.price} / month</Text>
+            <Text style={styles.price}>PKR {item.price} / month</Text>
             <Text style={styles.description}>{item.description}</Text>
+            {/* Display the property status */}
+            <Text
+              style={[
+                styles.status,
+                availability === 'Available' ? styles.availableStatus : styles.rentedStatus,
+              ]}
+            >
+              Status: {availability}
+            </Text>
 
             {/* Posted By Section */}
             <TouchableOpacity onPress={handleOwnerProfileClick}>
@@ -126,23 +158,23 @@ const ListingDetails = ({ route, navigation }) => {
             {/* Additional Details */}
             <View style={styles.facilitiesContainer}>
               <View style={styles.facility}>
-                <Icon name="hotel" size={18} color={COLORS.primary} />
+                <Icon name="hotel" size={18} color="#1e90ff" />
                 <Text style={styles.facilityText}>{item.rooms} Rooms</Text>
               </View>
               <View style={styles.facility}>
-                <Icon name="kitchen" size={18} color={COLORS.primary} />
+                <Icon name="kitchen" size={18} color="#1e90ff" />
                 <Text style={styles.facilityText}>{item.kitchen} Kitchen</Text>
               </View>
               <View style={styles.facility}>
-                <Icon name="bathtub" size={18} color={COLORS.primary} />
+                <Icon name="bathtub" size={18} color="#1e90ff" />
                 <Text style={styles.facilityText}>{item.washroom} Washrooms</Text>
               </View>
               <View style={styles.facility}>
-                <Icon name="aspect-ratio" size={18} color={COLORS.primary} />
+                <Icon name="aspect-ratio" size={18} color="#1e90ff" />
                 <Text style={styles.facilityText}>{item.size} m²</Text>
               </View>
               <View style={styles.facility}>
-                <Icon name="map" size={18} color={COLORS.primary} />
+                <Icon name="map" size={18} color="#1e90ff" />
                 <Text style={styles.facilityText}>{item.area} Area</Text>
               </View>
             </View>
@@ -157,17 +189,17 @@ const ListingDetails = ({ route, navigation }) => {
               <Icon name="phone" size={24} color="#fff" />
               <Text style={styles.contactButtonText}>Call</Text>
             </TouchableOpacity>
-
             <TouchableOpacity style={[styles.contactButton, styles.emailButton]} onPress={handleEmailClick}>
               <Icon name="email" size={24} color="#fff" />
               <Text style={styles.contactButtonText}>Email</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.whatsappContainer}>
+          <View style={styles.contactContainer}>
             <TouchableOpacity style={[styles.contactButton, styles.whatsappButton]} onPress={handleWhatsAppClick}>
               <FontAwesome name="whatsapp" size={24} color="#fff" />
               <Text style={styles.contactButtonText}>WhatsApp</Text>
             </TouchableOpacity>
+            
           </View>
         </View>
       </ScrollView>
@@ -207,83 +239,81 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: COLORS.dark,
+    color: '#333',
   },
   price: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: COLORS.blue,
+    color: '#1e90ff',
     marginVertical: 10,
   },
   description: {
     fontSize: 16,
-    color: COLORS.grey,
+    color: '#777',
     marginVertical: 10,
+  },
+  status: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginVertical: 8,
+    
+  },
+  availableStatus: {
+    color: '#25d366',
+  },
+  rentedStatus: {
+    color: 'red',
   },
   postedBy: {
     fontSize: 16,
-    color: COLORS.blue,
+    color: '#1e90ff',
     textDecorationLine: 'underline',
-    marginVertical: 10,
   },
   facilitiesContainer: {
     flexDirection: 'row',
-    marginTop: 20,
     flexWrap: 'wrap',
+    marginVertical: 10,
   },
   facility: {
     flexDirection: 'row',
     alignItems: 'center',
     marginRight: 15,
-    marginBottom: 10,
+    marginVertical: 5,
   },
   facilityText: {
     marginLeft: 5,
-    color: COLORS.grey,
-    fontSize: 16,
+    color: '#888',
   },
   contactContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 30,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    paddingTop: 20,
-  },
-  contactButton: {
-    padding: 15,
-    borderRadius: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    marginHorizontal: 5,
-  },
-  chatButton: {
-    backgroundColor: '#007BFF',
-  },
-  callButton: {
-    backgroundColor: '#28A745',
-  },
-  emailButton: {
-    backgroundColor: '#FF5722',
-  },
-  whatsappContainer: {
     marginTop: 20,
   },
-  whatsappButton: {
-    backgroundColor: '#25D366',
+  contactButton: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    width: '100%',
-    padding: 15,
-    borderRadius: 10,
+    justifyContent: 'center',
+    padding: 10,
+    borderRadius: 5,
+    flex: 1,
+    margin: 5,
+  },
+  chatButton: {
+    backgroundColor: '#1e90ff',
+  },
+  callButton: {
+    backgroundColor: '#28a745',
+  },
+  whatsappButton: {
+    backgroundColor: '#25d366',
+  },
+  emailButton: {
+    backgroundColor: '#dc3545',
   },
   contactButtonText: {
     color: '#fff',
-    fontSize: 16,
-    marginLeft: 10,
+    marginLeft: 5,
+    fontWeight: 'bold',
   },
 });
 

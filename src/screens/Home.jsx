@@ -74,6 +74,10 @@ const Home = ({ navigation }) => {
   const renderItem = ({ item }) => {
     const hasImages = item.images && item.images.length > 0;
     const userName = users[item.postedBy]?.name || 'Loading...';
+  
+    // Determine background color for availability status
+    const availabilityColor = item.availability === 'Available' ? '#25d366' : 'red';
+  
     return (
       <View style={styles.card}>
         {hasImages ? (
@@ -97,19 +101,26 @@ const Home = ({ navigation }) => {
           </View>
         )}
         <View style={styles.info}>
-          <Text style={styles.title}>{item.title}</Text>
-          <Text style={styles.price}>${item.price} / month</Text>
-          <Text style={styles.description}>{item.description}</Text>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>{item.title}</Text>
+            <View style={[styles.availabilityStatus, { backgroundColor: availabilityColor }]}>
+              <Text style={styles.availabilityStatusText}>
+                {item.availability || 'Not Available'}
+              </Text>
+            </View>
+          </View>
+          <Text style={styles.price}>PKR {item.price} / month</Text>
           <TouchableOpacity onPress={() => handleViewUserProfile(item.postedBy)}>
             <Text style={styles.postedBy}>Posted by: {userName}</Text>
           </TouchableOpacity>
+          {/* <Text style={styles.description}>{item.description}</Text> */}
           <View style={styles.specsContainer}>
             <View style={styles.specRow}>
               <View style={styles.specs}>
                 <Icon name="map" size={20} color="#00ADEF" />
                 <Text style={styles.specText}>{item.area}</Text>
               </View>
-              <View style={styles.specs}>
+              {/* <View style={styles.specs}>
                 <Icon name="hotel" size={20} color="#00ADEF" />
                 <Text style={styles.specText}>{item.rooms} Rooms</Text>
               </View>
@@ -124,7 +135,7 @@ const Home = ({ navigation }) => {
               <View style={styles.specs}>
                 <Icon name="aspect-ratio" size={20} color="#00ADEF" />
                 <Text style={styles.specText}>{item.size} sq. m</Text>
-              </View>
+              </View> */}
             </View>
           </View>
           <TouchableOpacity
@@ -137,6 +148,7 @@ const Home = ({ navigation }) => {
       </View>
     );
   };
+  
 
   return (
     <View style={styles.container}>
@@ -205,10 +217,15 @@ const styles = StyleSheet.create({
   info: {
     padding: 16,
   },
+  titleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 8,
   },
   price: {
     fontSize: 16,
@@ -219,6 +236,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginBottom: 8,
+  },
+  availabilityStatus: {
+    padding: 8,
+    borderRadius: 4,
+  },
+  availabilityStatusText: {
+    fontSize: 14,
+    color: 'white',
+    fontWeight: 'bold',
   },
   postedBy: {
     fontSize: 14,

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { View, TextInput, ScrollView, Button, StyleSheet, Alert, Image, Text, TouchableOpacity } from 'react-native';
+import { View, TextInput, ScrollView, Alert, Image, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
 import { FIRESTORE_DB } from '../../FirebaseConfig';
 import { doc, updateDoc } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import * as ImagePicker from 'expo-image-picker';
 
 const EditListing = ({ route, navigation }) => {
@@ -16,6 +15,8 @@ const EditListing = ({ route, navigation }) => {
   const [washroom, setWashroom] = useState(item?.washroom?.toString() || '');
   const [size, setSize] = useState(item?.size?.toString() || '');
   const [area, setArea] = useState(item?.area || '');
+  const [availability, setAvailability] = useState(item?.availability || 'Available'); // Add state for availability
+  const [modalVisible, setModalVisible] = useState(false);
 
   const handleImageUpload = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -48,6 +49,7 @@ const EditListing = ({ route, navigation }) => {
         size: parseFloat(size),
         area,
         images: updatedImages,
+        availability, // Add availability to updated data
       };
 
       await updateDoc(doc(FIRESTORE_DB, 'rentals', item.id), updatedData);
@@ -83,7 +85,30 @@ const EditListing = ({ route, navigation }) => {
         <TextInput style={styles.input} placeholder="Washrooms" value={washroom} onChangeText={setWashroom} keyboardType="numeric" />
         <TextInput style={styles.input} placeholder="Size (in sq. m)" value={size} onChangeText={setSize} keyboardType="numeric" />
         <TextInput style={styles.input} placeholder="Area" value={area} onChangeText={setArea} />
-        <TouchableOpacity style={styles.SaveButton} onPress={handleSavePress}>
+
+        <TouchableOpacity style={styles.pickerButton} onPress={() => setModalVisible(true)}>
+          <Text style={styles.pickerText}>{availability}</Text> 
+        </TouchableOpacity>
+
+        <Modal
+          visible={modalVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <TouchableOpacity style={styles.modalItem} onPress={() => { setAvailability('Available'); setModalVisible(false); }}>
+                <Text style={styles.modalItemText}>Available</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalItem} onPress={() => { setAvailability('Rented'); setModalVisible(false); }}>
+                <Text style={styles.modalItemText}>Rented</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        <TouchableOpacity style={styles.saveButton} onPress={handleSavePress}>
           <Text style={styles.buttonText}>Save</Text>
         </TouchableOpacity>
       </View>
@@ -118,7 +143,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignItems: 'center',
     marginTop: 10,
-
   },
   removeButtonText: {
     color: 'white',
@@ -130,7 +154,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  SaveButton: {
+  saveButton: {
     backgroundColor: '#00ADEF',
     padding: 15,
     borderRadius: 10,
@@ -141,6 +165,40 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  pickerText: {
+    color: 'black',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  pickerButton: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 16,
+    alignItems: 'center',
+    backgroundColor: '#fafafa',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    width: '80%',
+  },
+  modalItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  modalItemText: {
+    fontSize: 16,
   },
 });
 
