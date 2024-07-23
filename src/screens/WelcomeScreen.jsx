@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   topSection: {
-    marginTop: 20,
+    marginTop: 100,
     alignItems: 'center',
   },
   TitleText: {
@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   logoImage: {
-    marginTop: 20,
+    marginTop: 0,
     marginBottom: 20,
     width: 300,
     height: 200,

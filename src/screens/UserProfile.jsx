@@ -15,6 +15,9 @@ const ProfileScreen = () => {
   const [contactNumber, setContactNumber] = useState('');
   const [address, setAddress] = useState('');
   const [profileImage, setProfileImage] = useState('');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [email, setEmail] = useState('');
+
 
   const navigation = useNavigation();
   const storage = getStorage();
@@ -30,6 +33,8 @@ const ProfileScreen = () => {
           setContactNumber(data.contactNumber || '');
           setAddress(data.address || '');
           setProfileImage(data.photoURL || '');
+          setWhatsappNumber(data.whatsappNumber || ''); // Add this line
+          setEmail(data.email || ''); // Add this line
         }
       } else {
         setUserProfile(null);
@@ -46,6 +51,7 @@ const ProfileScreen = () => {
       unsubscribeListings();
     };
   }, []);
+
 
   const handleDeleteListing = async (id) => {
     try {
@@ -164,9 +170,7 @@ const ProfileScreen = () => {
           <TouchableOpacity style={styles.editIconContainer} onPress={handleImageUpload}>
             <Icon name="edit" color="#00ADEF" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleUsernameClick}>
-            <Text h4 style={styles.username}>{userProfile.displayName}</Text>
-          </TouchableOpacity>
+          <Text h4 style={styles.username}>{userProfile.displayName}</Text>
           <Text style={styles.email}>{userProfile.email}</Text>
         </>
       )}
@@ -184,17 +188,26 @@ const ProfileScreen = () => {
           <Text style={styles.infoLabel}>Address:</Text>
           <Text style={styles.infoValue}>{address}</Text>
         </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>WhatsApp Number:</Text>
+          <Text style={styles.infoValue}>{whatsappNumber || 'Not provided'}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Email:</Text>
+          <Text style={styles.infoValue}>{email || 'Not provided'}</Text>
+        </View>
         <Button title="Edit Information" onPress={handleEditProfile} buttonStyle={styles.editButton} />
       </View>
     </View>
   );
-  
+
+
   // Function to handle username click
   const handleUsernameClick = () => {
     navigation.navigate('UserProfile', { userId: userProfile.uid }); // Adjust navigation to your user profile route
   };
-  
-  
+
+
 
   const renderListingItem = ({ item }) => (
     <ListItem bottomDivider>

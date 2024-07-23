@@ -14,6 +14,7 @@ const EditProfileScreen = () => {
   const [contactNumber, setContactNumber] = useState(profileData.contactNumber || '');
   const [email, setEmail] = useState(profileData.email || '');
   const [address, setAddress] = useState(profileData.address || '');
+  const [whatsappNumber, setWhatsappNumber] = useState(profileData.whatsappNumber || '');
 
   const handleSaveProfile = async () => {
     const user = FIREBASE_Auth.currentUser;
@@ -24,7 +25,8 @@ const EditProfileScreen = () => {
           name,
           contactNumber,
           email,
-          address
+          address,
+          whatsappNumber // Save WhatsApp number
         }, { merge: true });
         Alert.alert('Profile updated successfully!');
         navigation.goBack();
@@ -49,6 +51,13 @@ const EditProfileScreen = () => {
         placeholder="Contact Number"
         value={contactNumber}
         onChangeText={setContactNumber}
+        keyboardType="phone-pad"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="WhatsApp Number" // New field
+        value={whatsappNumber}
+        onChangeText={setWhatsappNumber}
         keyboardType="phone-pad"
       />
       <TextInput
