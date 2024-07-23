@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, Dimensions, Animated, ScrollView } from 'react-native';
 import { FIRESTORE_DB } from '../../FirebaseConfig';
 import { collection, onSnapshot, doc, getDoc } from 'firebase/firestore';
-import { FAB, SearchBar } from 'react-native-elements';
 import Swiper from 'react-native-swiper';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import MultiSlider from '@ptomasroos/react-native-multi-slider';
+import { FAB, SearchBar } from 'react-native-elements';
+import CustomDropdown from '../consts/CustomDropdown';
+import Marker from '../consts/Marker';
 
 const { width: viewportWidth } = Dimensions.get('window');
 
@@ -13,6 +16,12 @@ const Home = ({ navigation }) => {
   const [users, setUsers] = useState({});
   const [search, setSearch] = useState('');
   const [filteredRentals, setFilteredRentals] = useState([]);
+  const [sliderValues, setSliderValues] = useState([0, 100000]);
+  const [showFilter, setShowFilter] = useState(false);
+  const [selectedRooms, setSelectedRooms] = useState([0, 5]); // Slider range for rooms
+  const [sortOption, setSortOption] = useState('Price Low to High'); // Default sort option
+
+  const filterAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const fetchUserData = async (userId) => {
@@ -47,16 +56,40 @@ const Home = ({ navigation }) => {
   }, []);
 
   useEffect(() => {
-    if (search === '') {
-      setFilteredRentals(rentals);
-    } else {
-      setFilteredRentals(
-        rentals.filter((item) =>
-          item.title.toLowerCase().includes(search.toLowerCase())
-        )
+    let updatedRentals = rentals;
+
+    if (search !== '') {
+      updatedRentals = updatedRentals.filter((item) =>
+        item.title.toLowerCase().includes(search.toLowerCase())
       );
     }
-  }, [search, rentals]);
+
+    updatedRentals = updatedRentals.filter(item => {
+      const price = parseFloat(item.price) || 0;
+      const rooms = parseFloat(item.rooms) || 0;
+
+      return price >= sliderValues[0] && price <= sliderValues[1] &&
+        (rooms >= selectedRooms[0] && rooms <= selectedRooms[1]);
+    });
+
+    if (sortOption === 'Price Low to High') {
+      updatedRentals = updatedRentals.sort((a, b) => {
+        const priceA = parseFloat(a.price) || 0;
+        const priceB = parseFloat(b.price) || 0;
+        return priceA - priceB;
+      });
+    } else if (sortOption === 'Price High to Low') {
+      updatedRentals = updatedRentals.sort((a, b) => {
+        const priceA = parseFloat(a.price) || 0;
+        const priceB = parseFloat(b.price) || 0;
+        return priceB - priceA;
+      });
+    } else if (sortOption === 'Newest First') {
+      updatedRentals = updatedRentals.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    }
+
+    setFilteredRentals(updatedRentals);
+  }, [search, rentals, sliderValues, selectedRooms, sortOption]);
 
   const handleDetailsPress = (item) => {
     navigation.navigate('ListingDetails', { item });
@@ -71,13 +104,30 @@ const Home = ({ navigation }) => {
     navigation.navigate('AddRental');
   };
 
+  const handleFilterPress = () => {
+    setShowFilter(prev => !prev);
+    Animated.timing(filterAnimation, {
+      toValue: showFilter ? 0 : 1,
+      duration: 300,
+      useNativeDriver: false
+    }).start();
+  };
+
+  const handleSortOptionChange = (option) => {
+    setSortOption(option);
+    setShowFilter(false); // Close filter when sorting is applied
+    Animated.timing(filterAnimation, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: false
+    }).start();
+  };
+
   const renderItem = ({ item }) => {
     const hasImages = item.images && item.images.length > 0;
     const userName = users[item.postedBy]?.name || 'Loading...';
-  
-    // Determine background color for availability status
     const availabilityColor = item.availability === 'Available' ? '#25d366' : 'red';
-  
+
     return (
       <View style={styles.card}>
         {hasImages ? (
@@ -113,29 +163,16 @@ const Home = ({ navigation }) => {
           <TouchableOpacity onPress={() => handleViewUserProfile(item.postedBy)}>
             <Text style={styles.postedBy}>Posted by: {userName}</Text>
           </TouchableOpacity>
-          {/* <Text style={styles.description}>{item.description}</Text> */}
           <View style={styles.specsContainer}>
             <View style={styles.specRow}>
               <View style={styles.specs}>
                 <Icon name="map" size={20} color="#00ADEF" />
-                <Text style={styles.specText}>{item.area}</Text>
+                <Text style={styles.specText}>{item.area} sq ft</Text>
               </View>
-              {/* <View style={styles.specs}>
+              <View style={styles.specs}>
                 <Icon name="hotel" size={20} color="#00ADEF" />
-                <Text style={styles.specText}>{item.rooms} Rooms</Text>
+                <Text style={styles.specText}>{item.rooms} rooms</Text>
               </View>
-              <View style={styles.specs}>
-                <Icon name="kitchen" size={20} color="#00ADEF" />
-                <Text style={styles.specText}>{item.kitchen} Kitchen</Text>
-              </View>
-              <View style={styles.specs}>
-                <Icon name="bathtub" size={20} color="#00ADEF" />
-                <Text style={styles.specText}>{item.washroom} Washrooms</Text>
-              </View>
-              <View style={styles.specs}>
-                <Icon name="aspect-ratio" size={20} color="#00ADEF" />
-                <Text style={styles.specText}>{item.size} sq. m</Text>
-              </View> */}
             </View>
           </View>
           <TouchableOpacity
@@ -148,7 +185,6 @@ const Home = ({ navigation }) => {
       </View>
     );
   };
-  
 
   return (
     <View style={styles.container}>
@@ -159,12 +195,64 @@ const Home = ({ navigation }) => {
         lightTheme
         round
         containerStyle={styles.searchBar}
-        inputContainerStyle={{ backgroundColor: 'white' }}
+        inputContainerStyle={{ backgroundColor: '#f1f1f1' }}
       />
+      <TouchableOpacity style={styles.filterButton} onPress={handleFilterPress}>
+        <Icon name="filter-list" size={24} color="#fff" />
+        <Text style={styles.filterButtonText}>Filter</Text>
+      </TouchableOpacity>
+      {showFilter && (
+        <Animated.View style={[styles.filterContainer, { height: filterAnimation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 400] // Adjusted to accommodate the ScrollView height
+        }) }]}>
+          <ScrollView>
+            <View style={styles.sortContainer}>
+              <Text style={styles.sortLabel}>Sort By:</Text>
+              <CustomDropdown
+                options={['Price Low to High', 'Price High to Low', 'Newest First']}
+                selectedOption={sortOption}
+                onSelect={handleSortOptionChange}
+              />
+            </View>
+            <View style={styles.sliderContainer}>
+  <Text style={styles.sliderLabel}>Rooms: {selectedRooms[0]} - {selectedRooms[1]}</Text>
+  <MultiSlider
+    values={selectedRooms}
+    onValuesChange={setSelectedRooms}
+    min={0}
+    max={20}
+    step={1}
+    selectedStyle={styles.selectedStyle}
+    trackStyle={styles.trackStyle}
+    markerStyle={styles.markerStyle}
+    customMarker={Marker}
+  />
+</View>
+
+<View style={styles.sliderContainer}>
+  <Text style={styles.sliderLabel}>Price: PKR {sliderValues[0]} - PKR {sliderValues[1]}</Text>
+  <MultiSlider
+    values={sliderValues}
+    onValuesChange={setSliderValues}
+    min={0}
+    max={100000}
+    step={1000}
+    selectedStyle={styles.selectedStyle}
+    trackStyle={styles.trackStyle}
+    markerStyle={styles.markerStyle}
+    customMarker={Marker}
+  />
+</View>
+
+          </ScrollView>
+        </Animated.View>
+      )}
       <FlatList
         data={filteredRentals}
-        keyExtractor={(item) => item.id}
         renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.list}
       />
       <FAB
         placement="right"
@@ -219,13 +307,13 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    justifyContent: 'space-between',
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
+    marginBottom: 8,
   },
   price: {
     fontSize: 16,
@@ -240,6 +328,7 @@ const styles = StyleSheet.create({
   availabilityStatus: {
     padding: 8,
     borderRadius: 4,
+    marginBottom: 8,
   },
   availabilityStatusText: {
     fontSize: 14,
@@ -257,31 +346,70 @@ const styles = StyleSheet.create({
   },
   specRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'center',
+    marginBottom: 4,
   },
   specs: {
     flexDirection: 'row',
     alignItems: 'center',
     marginRight: 16,
-    marginBottom: 8,
   },
   specText: {
-    marginLeft: 4,
     fontSize: 14,
     color: '#666',
+    marginLeft: 4,
   },
   detailsButton: {
-    marginTop: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
     backgroundColor: '#00ADEF',
-    borderRadius: 4,
+    padding: 12,
+    borderRadius: 8,
     alignItems: 'center',
   },
   detailsButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: 'bold',
+    color: '#fff',
+    fontSize: 16,
+  },
+  sliderContainer: {
+    padding: 16,
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+  },
+  sliderLabel: {
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  marker: {
+    backgroundColor: '#00ADEF',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+  },
+  selected: {
+    backgroundColor: '#00ADEF',
+  },
+  unselected: {
+    backgroundColor: '#ddd',
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#00ADEF',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 16,
+    width: 120,
+    justifyContent: 'center',
+  },
+  filterButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    marginLeft: 8,
   },
 });
 
