@@ -7,8 +7,6 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import HomeScreen from './src/screens/Home';
 import RegistrationScreen from './src/screens/RegistrationScreen';
-import SearchResult from './src/screens/SearchResult';
-import Filter from './src/screens/Filter';
 import ListingDetails from './src/screens/ListingDetails';
 import Checkout from './src/screens/Checkout';
 import MainChatScreen from './src/screens/MainChatScreen';
@@ -39,8 +37,6 @@ function HomeStack() {
         component={HomeScreen} 
         options={{ headerShown: false }} 
       />
-      <Stack.Screen name="SearchResult" component={SearchResult} />
-      <Stack.Screen name="Filter" component={Filter} />
       <Stack.Screen name="ListingDetails" component={ListingDetails} />
       <Stack.Screen name="EditListing" component={EditListing} />
       <Stack.Screen name="Checkout" component={Checkout} />

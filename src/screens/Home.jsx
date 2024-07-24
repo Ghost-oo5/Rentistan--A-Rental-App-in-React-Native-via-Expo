@@ -18,7 +18,7 @@ const Home = ({ navigation }) => {
   const [filteredRentals, setFilteredRentals] = useState([]);
   const [sliderValues, setSliderValues] = useState([0, 100000]);
   const [showFilter, setShowFilter] = useState(false);
-  const [selectedRooms, setSelectedRooms] = useState([0, 5]); // Slider range for rooms
+  const [selectedRooms, setSelectedRooms] = useState([0, 20]); // Slider range for rooms
   const [sortOption, setSortOption] = useState('Price Low to High'); // Default sort option
 
   const filterAnimation = useRef(new Animated.Value(0)).current;
@@ -39,11 +39,12 @@ const Home = ({ navigation }) => {
       const userMap = {};
       for (const docSnapshot of snapshot.docs) {
         const rentalData = { id: docSnapshot.id, ...docSnapshot.data() };
-        rentalList.push(rentalData);
         if (!userMap[rentalData.postedBy]) {
           const userData = await fetchUserData(rentalData.postedBy);
           userMap[rentalData.postedBy] = userData;
         }
+        rentalData.userName = userMap[rentalData.postedBy]?.name || 'Loading...';
+        rentalList.push(rentalData);
       }
       setRentals(rentalList);
       setUsers(userMap);
@@ -60,7 +61,8 @@ const Home = ({ navigation }) => {
 
     if (search !== '') {
       updatedRentals = updatedRentals.filter((item) =>
-        item.title.toLowerCase().includes(search.toLowerCase())
+        item.title.toLowerCase().includes(search.toLowerCase()) ||
+        item.userName.toLowerCase().includes(search.toLowerCase())
       );
     }
 
@@ -125,7 +127,7 @@ const Home = ({ navigation }) => {
 
   const renderItem = ({ item }) => {
     const hasImages = item.images && item.images.length > 0;
-    const userName = users[item.postedBy]?.name || 'Loading...';
+    const userName = item.userName || 'Loading...';
     const availabilityColor = item.availability === 'Available' ? '#25d366' : 'red';
 
     return (
@@ -167,7 +169,7 @@ const Home = ({ navigation }) => {
             <View style={styles.specRow}>
               <View style={styles.specs}>
                 <Icon name="map" size={20} color="#00ADEF" />
-                <Text style={styles.specText}>{item.area} sq ft</Text>
+                <Text style={styles.specText}>{item.area}</Text>
               </View>
               <View style={styles.specs}>
                 <Icon name="hotel" size={20} color="#00ADEF" />
@@ -189,7 +191,7 @@ const Home = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <SearchBar
-        placeholder="Search by title..."
+        placeholder="Search by title or user..."
         onChangeText={setSearch}
         value={search}
         lightTheme
@@ -215,36 +217,40 @@ const Home = ({ navigation }) => {
                 onSelect={handleSortOptionChange}
               />
             </View>
-            <View style={styles.sliderContainer}>
-  <Text style={styles.sliderLabel}>Rooms: {selectedRooms[0]} - {selectedRooms[1]}</Text>
-  <MultiSlider
-    values={selectedRooms}
-    onValuesChange={setSelectedRooms}
-    min={0}
-    max={20}
-    step={1}
-    selectedStyle={styles.selectedStyle}
-    trackStyle={styles.trackStyle}
-    markerStyle={styles.markerStyle}
-    customMarker={Marker}
-  />
-</View>
-
-<View style={styles.sliderContainer}>
-  <Text style={styles.sliderLabel}>Price: PKR {sliderValues[0]} - PKR {sliderValues[1]}</Text>
-  <MultiSlider
-    values={sliderValues}
-    onValuesChange={setSliderValues}
-    min={0}
-    max={100000}
-    step={1000}
-    selectedStyle={styles.selectedStyle}
-    trackStyle={styles.trackStyle}
-    markerStyle={styles.markerStyle}
-    customMarker={Marker}
-  />
-</View>
-
+            <View style={styles.filterSection}>
+              <Text style={styles.filterLabel}>Price Range</Text>
+              <MultiSlider
+                values={sliderValues}
+                onValuesChange={setSliderValues}
+                min={0}
+                max={100000}
+                step={1000}
+                markerStyle={Marker}
+                selectedStyle={{ backgroundColor: '#00ADEF' }}
+                sliderLength={viewportWidth - 40}
+              />
+              <View style={styles.sliderLabels}>
+                <Text>PKR {sliderValues[0]}</Text>
+                <Text>PKR {sliderValues[1]}</Text>
+              </View>
+            </View>
+            <View style={styles.filterSection}>
+              <Text style={styles.filterLabel}>Number of Rooms</Text>
+              <MultiSlider
+                values={selectedRooms}
+                onValuesChange={setSelectedRooms}
+                min={0}
+                max={20}
+                step={1}
+                markerStyle={Marker}
+                selectedStyle={{ backgroundColor: '#00ADEF' }}
+                sliderLength={viewportWidth - 40}
+              />
+              <View style={styles.sliderLabels}>
+                <Text>{selectedRooms[0]} rooms</Text>
+                <Text>{selectedRooms[1]} rooms</Text>
+              </View>
+            </View>
           </ScrollView>
         </Animated.View>
       )}
@@ -252,14 +258,15 @@ const Home = ({ navigation }) => {
         data={filteredRentals}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={styles.listContent}
       />
       <FAB
+        title="Add Rental"
         placement="right"
-        color="#00ADEF"
-        title={'Add Listing'}
-        icon={{ name: 'add', color: 'white' }}
         onPress={handleFabPress}
+        icon={{ name: 'add', color: 'white' }}
+        color="#00ADEF"
+        style={styles.fab}
       />
     </View>
   );
