@@ -9,13 +9,13 @@ import {
   Dimensions,
   Image,
   TouchableOpacity,
-  Linking
+  Linking,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import FontAwesome from 'react-native-vector-icons/FontAwesome'; // Import FontAwesome for WhatsApp icon
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Swiper from 'react-native-swiper';
-import { FIRESTORE_DB } from '../../FirebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
+import { FIRESTORE_DB, FIREBASE_Auth } from '../../FirebaseConfig'; // Import the correct module
+import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 
 const { width } = Dimensions.get('screen');
 
@@ -26,10 +26,11 @@ const ListingDetails = ({ route, navigation }) => {
     contactNumber: '',
     email: '',
     whatsappNumber: '',
-    photoURL: ''
+    photoURL: '',
   });
 
-  const [availability, setAvailability] = useState('Loading...'); // Add state for availability
+  const [availability, setAvailability] = useState('Loading...');
+  const [isFavorited, setIsFavorited] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -42,7 +43,7 @@ const ListingDetails = ({ route, navigation }) => {
             contactNumber: userData.contactNumber || '',
             email: userData.email || '',
             whatsappNumber: userData.whatsappNumber || '',
-            photoURL: userData.photoURL || ''
+            photoURL: userData.photoURL || '',
           });
         } else {
           setUserProfile({
@@ -50,11 +51,10 @@ const ListingDetails = ({ route, navigation }) => {
             contactNumber: '',
             email: '',
             whatsappNumber: '',
-            photoURL: ''
+            photoURL: '',
           });
         }
 
-        // Fetch availability status from the rental item document
         const listingDoc = await getDoc(doc(FIRESTORE_DB, 'rentals', item.id));
         if (listingDoc.exists()) {
           const listingData = listingDoc.data();
@@ -62,6 +62,8 @@ const ListingDetails = ({ route, navigation }) => {
         } else {
           setAvailability('Unknown Status');
         }
+
+        checkFavoriteStatus();
       } catch (error) {
         console.error('Error fetching data: ', error);
         setUserProfile({
@@ -69,9 +71,22 @@ const ListingDetails = ({ route, navigation }) => {
           contactNumber: '',
           email: '',
           whatsappNumber: '',
-          photoURL: ''
+          photoURL: '',
         });
         setAvailability('Error fetching status');
+      }
+    };
+
+    const checkFavoriteStatus = async () => {
+      const user = FIREBASE_Auth.currentUser;
+      if (user) {
+        const userDoc = await getDoc(doc(FIRESTORE_DB, 'users', user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          if (userData.favorites && userData.favorites.includes(item.id)) {
+            setIsFavorited(true);
+          }
+        }
       }
     };
 
@@ -115,32 +130,61 @@ const ListingDetails = ({ route, navigation }) => {
     navigation.navigate('ViewUserProfile', { userId: item.postedBy });
   };
 
+  const handleFavoriteClick = async () => {
+    const user = FIREBASE_Auth.currentUser;
+    if (user) {
+      const userRef = doc(FIRESTORE_DB, 'users', user.uid);
+      try {
+        if (isFavorited) {
+          await updateDoc(userRef, {
+            favorites: arrayRemove(item.id),
+          });
+          setIsFavorited(false);
+        } else {
+          await updateDoc(userRef, {
+            favorites: arrayUnion(item.id),
+          });
+          setIsFavorited(true);
+        }
+      } catch (error) {
+        console.error('Error updating favorites: ', error);
+        alert('Failed to update favorite status');
+      }
+    } else {
+      alert('Please log in to favorite listings');
+    }
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      <StatusBar
-        translucent={false}
-        backgroundColor="#fff"
-        barStyle="dark-content"
-      />
+      <StatusBar translucent={false} backgroundColor="#fff" barStyle="dark-content" />
       <ScrollView>
         <View style={styles.container}>
-          {item.images && item.images.length > 0 ? (
-            <Swiper style={styles.swiper} showsButtons={false} autoplay loop>
-              {item.images.map((image, index) => (
-                <Image key={index} source={{ uri: image }} style={styles.image} />
-              ))}
-            </Swiper>
-          ) : (
-            <View style={styles.noImageContainer}>
-              <Text style={styles.noImageText}>No Images Available</Text>
-            </View>
-          )}
+          <View style={styles.imageContainer}>
+            {item.images && item.images.length > 0 ? (
+              <Swiper style={styles.swiper} showsButtons={false} autoplay loop>
+                {item.images.map((image, index) => (
+                  <Image key={index} source={{ uri: image }} style={styles.image} />
+                ))}
+              </Swiper>
+            ) : (
+              <View style={styles.noImageContainer}>
+                <Text style={styles.noImageText}>No Images Available</Text>
+              </View>
+            )}
+            <TouchableOpacity onPress={handleFavoriteClick} style={styles.favoriteButton}>
+              <Icon
+                name={isFavorited ? 'favorite' : 'favorite-border'}
+                size={24}
+                color={isFavorited ? '#f44336' : '#888'}
+              />
+            </TouchableOpacity>
+          </View>
 
           <View style={styles.detailsContainer}>
             <Text style={styles.title}>{item.title}</Text>
             <Text style={styles.price}>PKR {item.price} / month</Text>
             <Text style={styles.description}>{item.description}</Text>
-            {/* Display the property status */}
             <Text
               style={[
                 styles.status,
@@ -150,12 +194,10 @@ const ListingDetails = ({ route, navigation }) => {
               Status: {availability}
             </Text>
 
-            {/* Posted By Section */}
             <TouchableOpacity onPress={handleOwnerProfileClick}>
               <Text style={styles.postedBy}>Posted by: {userProfile.name}</Text>
             </TouchableOpacity>
 
-            {/* Additional Details */}
             <View style={styles.facilitiesContainer}>
               <View style={styles.facility}>
                 <Icon name="hotel" size={18} color="#1e90ff" />
@@ -194,12 +236,11 @@ const ListingDetails = ({ route, navigation }) => {
               <Text style={styles.contactButtonText}>Email</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.contactContainer}>
-            <TouchableOpacity style={[styles.contactButton, styles.whatsappButton]} onPress={handleWhatsAppClick}>
+          <View style={styles.whatsappContainer}>
+            <TouchableOpacity style={styles.whatsappButton} onPress={handleWhatsAppClick}>
               <FontAwesome name="whatsapp" size={24} color="#fff" />
-              <Text style={styles.contactButtonText}>WhatsApp</Text>
+              <Text style={styles.whatsappButtonText}>WhatsApp</Text>
             </TouchableOpacity>
-            
           </View>
         </View>
       </ScrollView>
@@ -210,6 +251,9 @@ const ListingDetails = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
+  },
+  imageContainer: {
+    position: 'relative',
   },
   swiper: {
     height: width * 0.6,
@@ -232,6 +276,15 @@ const styles = StyleSheet.create({
   noImageText: {
     color: '#888',
     fontSize: 16,
+  },
+  favoriteButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 5,
+    elevation: 2,
   },
   detailsContainer: {
     marginTop: 20,
@@ -256,7 +309,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginVertical: 8,
-    
   },
   availableStatus: {
     color: '#25d366',
@@ -304,15 +356,29 @@ const styles = StyleSheet.create({
   callButton: {
     backgroundColor: '#28a745',
   },
-  whatsappButton: {
-    backgroundColor: '#25d366',
-  },
   emailButton: {
     backgroundColor: '#dc3545',
   },
   contactButtonText: {
     color: '#fff',
     marginLeft: 5,
+    fontWeight: 'bold',
+  },
+  whatsappContainer: {
+    marginTop: 0, // Add marginTop to separate it from other buttons if needed
+  },
+  whatsappButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 10,
+    borderRadius: 5,
+    backgroundColor: '#25d366',
+    margin: 5,
+  },
+  whatsappButtonText: {
+    color: '#fff',
+    marginLeft: 8, // Adjust margin for spacing between icon and text
     fontWeight: 'bold',
   },
 });
