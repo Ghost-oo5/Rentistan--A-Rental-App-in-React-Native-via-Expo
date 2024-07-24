@@ -29,8 +29,8 @@ import { UserProvider, UserContext } from './UserContext';
 import ViewUserProfile from './src/screens/ViewUserProfile';
 import UserSelectionScreen from './src/screens/UserSelectionScreen';
 
-const Stack = createStackNavigator();
-const Tab = createBottomTabNavigator();
+// Import Notification Helpers
+import { registerForPushNotificationsAsync, saveTokenToFirestore } from './src/consts/NotificationService';
 
 // Notification handling
 Notifications.setNotificationHandler({
@@ -41,53 +41,8 @@ Notifications.setNotificationHandler({
   }),
 });
 
-async function registerForPushNotificationsAsync() {
-  if (Platform.OS === 'android') {
-    Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#FF231F7C',
-    });
-  }
-
-  if (Device.isDevice) {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-    if (finalStatus !== 'granted') {
-      Alert.alert('Permission not granted');
-      return;
-    }
-    const projectId =
-      Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
-    if (!projectId) {
-      Alert.alert('Project ID not found');
-      return;
-    }
-    try {
-      const pushToken = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
-      console.log(pushToken);
-      return pushToken;
-    } catch (e) {
-      Alert.alert(`Error: ${e}`);
-    }
-  } else {
-    Alert.alert('Must use physical device for push notifications');
-  }
-}
-
-async function saveTokenToFirestore(token) {
-  const userId = FIREBASE_Auth.currentUser?.uid;
-  if (userId) {
-    await FIRESTORE_DB.collection('users').doc(userId).update({
-      expoPushToken: token,
-    });
-  }
-}
+const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
 
 function HomeStack() {
   return (
@@ -165,50 +120,6 @@ function MainTabs() {
   );
 }
 
-export default function App() {
-  const [initializing, setInitializing] = useState(true);
-  const [user, setUser] = useState(null);
-  const notificationListener = useRef();
-  const responseListener = useRef();
-
-  useEffect(() => {
-    const unsubscribe = FIREBASE_Auth.onAuthStateChanged((user) => {
-      setUser(user);
-      if (initializing) setInitializing(false);
-    });
-
-    registerForPushNotificationsAsync().then(token => {
-      if (token) {
-        saveTokenToFirestore(token);
-      }
-    });
-
-    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-      // Alert.alert('A new FCM message arrived!', JSON.stringify(notification));
-    });
-
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-      console.log(response);
-    });
-
-    return () => {
-      unsubscribe();
-      Notifications.removeNotificationSubscription(notificationListener.current);
-      Notifications.removeNotificationSubscription(responseListener.current);
-    };
-  }, [initializing]);
-
-  if (initializing) return null;
-
-  return (
-    <UserProvider> 
-      <NavigationContainer>
-        <MainNavigator />
-      </NavigationContainer>
-    </UserProvider> 
-  );
-}
-
 function MainNavigator() {
   return (
     <Stack.Navigator initialRouteName="Welcome">
@@ -261,6 +172,50 @@ function MainNavigator() {
   );
 }
 
+export default function App() {
+  const [initializing, setInitializing] = useState(true);
+  const [user, setUser] = useState(null);
+  const notificationListener = useRef();
+  const responseListener = useRef();
+
+  useEffect(() => {
+    const unsubscribe = FIREBASE_Auth.onAuthStateChanged((user) => {
+      setUser(user);
+      if (initializing) setInitializing(false);
+    });
+
+    registerForPushNotificationsAsync().then(token => {
+      if (token) {
+        saveTokenToFirestore(token);
+      }
+    });
+
+    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+      // Alert.alert('A new FCM message arrived!', JSON.stringify(notification));
+    });
+
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log(response);
+    });
+
+    return () => {
+      unsubscribe();
+      Notifications.removeNotificationSubscription(notificationListener.current);
+      Notifications.removeNotificationSubscription(responseListener.current);
+    };
+  }, [initializing]);
+
+  if (initializing) return null;
+
+  return (
+    <UserProvider> 
+      <NavigationContainer>
+        <MainNavigator />
+      </NavigationContainer>
+    </UserProvider> 
+  );
+}
+
 const styles = StyleSheet.create({
   headerTitleContainer: {
     flexDirection: 'row',
@@ -278,9 +233,9 @@ const styles = StyleSheet.create({
     marginLeft: 'auto',
   },
   profileImage: {
-    width: 45,  // Increased width
-    height: 45, // Increased height
-    borderRadius: 25, // Adjusted for a circular image
+    width: 45,
+    height: 45,
+    borderRadius: 25,
     marginBottom: 10,
     marginTop: 10,
   },

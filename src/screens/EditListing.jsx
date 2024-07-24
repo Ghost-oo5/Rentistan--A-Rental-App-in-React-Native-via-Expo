@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { View, TextInput, ScrollView, Alert, Image, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
 import { FIRESTORE_DB } from '../../FirebaseConfig';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import * as ImagePicker from 'expo-image-picker';
+import * as Notifications from 'expo-notifications';
 
 const EditListing = ({ route, navigation }) => {
   const { item } = route.params || {};
@@ -50,9 +51,20 @@ const EditListing = ({ route, navigation }) => {
         area,
         images: updatedImages,
         availability, // Add availability to updated data
+        timestamp: Timestamp.now() // Update timestamp
       };
 
       await updateDoc(doc(FIRESTORE_DB, 'rentals', item.id), updatedData);
+
+      // Trigger notification
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'Listing Updated',
+          body: `The listing "${title}" has been updated.`,
+        },
+        trigger: null,
+      });
+
       Alert.alert('Success', 'Listing updated successfully.');
       navigation.goBack();
     } catch (error) {
@@ -87,7 +99,7 @@ const EditListing = ({ route, navigation }) => {
         <TextInput style={styles.input} placeholder="Area" value={area} onChangeText={setArea} />
 
         <TouchableOpacity style={styles.pickerButton} onPress={() => setModalVisible(true)}>
-          <Text style={styles.pickerText}>{availability}</Text> 
+          <Text style={styles.pickerText}>{availability}</Text>
         </TouchableOpacity>
 
         <Modal

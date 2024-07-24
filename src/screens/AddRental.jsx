@@ -1,10 +1,11 @@
 import React, { useState, useContext } from 'react';
-import { View, TextInput, StyleSheet, Alert, Image, ScrollView, TouchableOpacity, Text } from 'react-native';
+import { View, TextInput, StyleSheet, Alert, Image, ScrollView, TouchableOpacity, Text, Modal } from 'react-native';
 import { FIRESTORE_DB } from '../../FirebaseConfig';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, Timestamp } from 'firebase/firestore'; // Import Timestamp
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import * as ImagePicker from 'expo-image-picker';
 import { UserContext } from '../../UserContext';
+import * as Notifications from 'expo-notifications';
 
 const AddRental = ({ navigation }) => {
   const [title, setTitle] = useState('');
@@ -16,6 +17,8 @@ const AddRental = ({ navigation }) => {
   const [washroom, setWashroom] = useState('');
   const [size, setSize] = useState('');
   const [area, setArea] = useState('');
+  const [availability, setAvailability] = useState('Available'); // Set default availability
+  const [modalVisible, setModalVisible] = useState(false);
   const { user } = useContext(UserContext);
 
   const handleAddRental = async () => {
@@ -33,7 +36,7 @@ const AddRental = ({ navigation }) => {
       }
 
       try {
-        await addDoc(collection(FIRESTORE_DB, 'rentals'), {
+        const rentalData = {
           title,
           images: imageUrls,
           price,
@@ -43,9 +46,24 @@ const AddRental = ({ navigation }) => {
           washroom,
           size,
           area,
+          availability, // Add availability to the rental data
           postedBy: user?.id || 'Anonymous',
           postedByName: user?.name || 'Anonymous', // Include the user's name here
+          timestamp: Timestamp.now() // Add timestamp to the rental data
+        };
+
+        // Add the rental listing to Firestore
+        await addDoc(collection(FIRESTORE_DB, 'rentals'), rentalData);
+
+        // Trigger notification
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: 'New Listing Added',
+            body: `A new listing has been added: ${title}`,
+          },
+          trigger: null,
         });
+
         Alert.alert('Success', 'Rental listing added successfully!');
         navigation.goBack();
       } catch (error) {
@@ -133,6 +151,29 @@ const AddRental = ({ navigation }) => {
         value={area}
         onChangeText={setArea}
       />
+
+      <TouchableOpacity style={styles.pickerButton} onPress={() => setModalVisible(true)}>
+        <Text style={styles.pickerText}>{availability}</Text> 
+      </TouchableOpacity>
+
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity style={styles.modalItem} onPress={() => { setAvailability('Available'); setModalVisible(false); }}>
+              <Text style={styles.modalItemText}>Available</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.modalItem} onPress={() => { setAvailability('Rented'); setModalVisible(false); }}>
+              <Text style={styles.modalItemText}>Rented</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <TouchableOpacity style={styles.addButton} onPress={handleAddRental}>
         <Text style={styles.buttonText}>Add Rental</Text>
       </TouchableOpacity>
@@ -180,6 +221,40 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  pickerText: {
+    color: 'black',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  pickerButton: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 16,
+    alignItems: 'center',
+    backgroundColor: '#fafafa',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    width: '80%',
+  },
+  modalItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  modalItemText: {
+    fontSize: 16,
   },
 });
 

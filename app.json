@@ -23,8 +23,7 @@
         "foregroundImage": "./src/assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.abdulbasit.FYPpractice",
-      "googleServicesFile": "./google-services.json" 
+      "package": "com.abdulbasit.FYPpractice"
     },
     "web": {
       "favicon": "./src/assets/favicon.png"
