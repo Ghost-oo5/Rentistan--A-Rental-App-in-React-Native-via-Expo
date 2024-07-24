@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, StyleSheet, TouchableOpacity, Alert, SectionList } from 'react-native';
+import { View, Image, StyleSheet, TouchableOpacity, Alert, SectionList, ScrollView } from 'react-native';
 import { FIRESTORE_DB, FIREBASE_Auth } from '../../FirebaseConfig';
-import { collection, getDoc, onSnapshot, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDoc, onSnapshot, deleteDoc, doc, updateDoc, query, where } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { ListItem, Icon, Text, Button } from 'react-native-elements';
 import { useNavigation } from '@react-navigation/native';
@@ -35,19 +35,24 @@ const ProfileScreen = () => {
           setWhatsappNumber(data.whatsappNumber || '');
           setEmail(data.email || '');
         }
+        
+        // Fetch user's listings
+        const userQuery = query(collection(FIRESTORE_DB, 'rentals'), where('postedBy', '==', user.uid));
+        const unsubscribeListings = onSnapshot(userQuery, (snapshot) => {
+          const listingsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setListings(listingsList);
+        });
+
+        return () => {
+          unsubscribeListings();
+        };
       } else {
         setUserProfile(null);
       }
     });
 
-    const unsubscribeListings = onSnapshot(collection(FIRESTORE_DB, 'rentals'), (snapshot) => {
-      const listingsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setListings(listingsList);
-    });
-
     return () => {
       unsubscribeAuth();
-      unsubscribeListings();
     };
   }, []);
 
@@ -221,9 +226,23 @@ const ProfileScreen = () => {
         <Icon name="delete" color="red" />
       </TouchableOpacity>
       <TouchableOpacity onPress={() => handleModifyListing(item)}>
-        <Icon name="edit" color="#00ADEF" />
+        <Icon name="edit" color="blue" />
       </TouchableOpacity>
     </ListItem>
+  );
+
+  const renderListingsSection = () => (
+    <View style={styles.listingsContainer}>
+      <Text h4 style={styles.header}>Your Listings</Text>
+      <SectionList
+        sections={[{ title: 'Listings', data: listings }]}
+        keyExtractor={(item) => item.id}
+        renderItem={renderListingItem}
+        renderSectionHeader={({ section: { title } }) => (
+          <Text style={styles.sectionHeader}>{title}</Text>
+        )}
+      />
+    </View>
   );
 
   return (

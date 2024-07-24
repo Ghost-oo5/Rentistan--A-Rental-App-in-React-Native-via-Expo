@@ -9,7 +9,7 @@ import { FAB, SearchBar } from 'react-native-elements';
 import CustomDropdown from '../consts/CustomDropdown';
 import Marker from '../consts/Marker';
 
-const { width: viewportWidth } = Dimensions.get('window');
+
 
 const Home = ({ navigation }) => {
   const [rentals, setRentals] = useState([]);
@@ -217,40 +217,36 @@ const Home = ({ navigation }) => {
                 onSelect={handleSortOptionChange}
               />
             </View>
-            <View style={styles.filterSection}>
-              <Text style={styles.filterLabel}>Price Range</Text>
-              <MultiSlider
-                values={sliderValues}
-                onValuesChange={setSliderValues}
-                min={0}
-                max={100000}
-                step={1000}
-                markerStyle={Marker}
-                selectedStyle={{ backgroundColor: '#00ADEF' }}
-                sliderLength={viewportWidth - 40}
-              />
-              <View style={styles.sliderLabels}>
-                <Text>PKR {sliderValues[0]}</Text>
-                <Text>PKR {sliderValues[1]}</Text>
-              </View>
-            </View>
-            <View style={styles.filterSection}>
-              <Text style={styles.filterLabel}>Number of Rooms</Text>
-              <MultiSlider
-                values={selectedRooms}
-                onValuesChange={setSelectedRooms}
-                min={0}
-                max={20}
-                step={1}
-                markerStyle={Marker}
-                selectedStyle={{ backgroundColor: '#00ADEF' }}
-                sliderLength={viewportWidth - 40}
-              />
-              <View style={styles.sliderLabels}>
-                <Text>{selectedRooms[0]} rooms</Text>
-                <Text>{selectedRooms[1]} rooms</Text>
-              </View>
-            </View>
+            <View style={styles.sliderContainer}>
+  <Text style={styles.sliderLabel}>Rooms: {selectedRooms[0]} - {selectedRooms[1]}</Text>
+  <MultiSlider
+    values={selectedRooms}
+    onValuesChange={setSelectedRooms}
+    min={0}
+    max={20}
+    step={1}
+    selectedStyle={styles.selectedStyle}
+    trackStyle={styles.trackStyle}
+    markerStyle={styles.markerStyle}
+    customMarker={Marker}
+  />
+</View>
+
+<View style={styles.sliderContainer}>
+  <Text style={styles.sliderLabel}>Price: PKR {sliderValues[0]} - PKR {sliderValues[1]}</Text>
+  <MultiSlider
+    values={sliderValues}
+    onValuesChange={setSliderValues}
+    min={0}
+    max={100000}
+    step={1000}
+    selectedStyle={styles.selectedStyle}
+    trackStyle={styles.trackStyle}
+    markerStyle={styles.markerStyle}
+    customMarker={Marker}
+  />
+</View>
+
           </ScrollView>
         </Animated.View>
       )}
@@ -334,7 +330,7 @@ const styles = StyleSheet.create({
   },
   availabilityStatus: {
     padding: 8,
-    borderRadius: 4,
+    borderRadius: 15,
     marginBottom: 8,
   },
   availabilityStatusText: {

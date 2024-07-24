@@ -11,7 +11,6 @@ import ListingDetails from './src/screens/ListingDetails';
 import Checkout from './src/screens/Checkout';
 import MainChatScreen from './src/screens/MainChatScreen';
 import ChatRoom from './src/screens/ChatRoom';
-import TenantFinder from './src/screens/TenantFinder';
 import UserProfile from './src/screens/UserProfile';
 import ProfileScreen from './src/screens/UserProfile'; 
 import EditProfileScreen from './src/screens/EditProfileScreen'; 
@@ -41,7 +40,6 @@ function HomeStack() {
       <Stack.Screen name="EditListing" component={EditListing} />
       <Stack.Screen name="Checkout" component={Checkout} />
       <Stack.Screen name="ChatRoom" component={ChatRoom} options={{ headerShown: false }} />
-      <Stack.Screen name="TenantFinder" component={TenantFinder} />
       <Stack.Screen name="AddRental" component={AddRental} /> 
       <Stack.Screen name='EditProfileScreen' component={EditProfileScreen} />
       <Stack.Screen name="ViewUserProfile" component={ViewUserProfile} /> 
