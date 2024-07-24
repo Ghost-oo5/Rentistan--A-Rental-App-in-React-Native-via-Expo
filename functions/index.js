@@ -48,3 +48,26 @@ exports.uploadImage = functions.https.onRequest((req, res) => {
     }
   });
 });
+
+
+// functions/index.js
+const functions = require('firebase-functions');
+const admin = require('firebase-admin');
+
+admin.initializeApp();
+
+exports.sendNewListingNotification = functions.firestore
+  .document('listings/{listingId}')
+  .onCreate((snap, context) => {
+    const newListing = snap.data();
+
+    const payload = {
+      notification: {
+        title: 'New Listing Added',
+        body: `Check out the new listing: ${newListing.title}`,
+        sound: 'default',
+      },
+    };
+
+    return admin.messaging().sendToTopic('newListings', payload);
+  });

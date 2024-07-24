@@ -1,9 +1,13 @@
-import React, { useContext } from 'react';
+import React, { useEffect, useRef, useState, useContext } from 'react';
+import { View, TouchableOpacity, Image, StyleSheet, Text, Alert, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, TouchableOpacity, Image, StyleSheet, Text } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+import Constants from 'expo-constants';
+import { FIREBASE_Auth, FIRESTORE_DB } from './FirebaseConfig';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import HomeScreen from './src/screens/Home';
 import RegistrationScreen from './src/screens/RegistrationScreen';
@@ -22,11 +26,68 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import HelpAndSupportScreen from './src/screens/HelpAndSupportScreen';
 import ReviewsAndRatingsScreen from './src/screens/ReviewsAndRatingsScreen';
 import { UserProvider, UserContext } from './UserContext';
-import ViewUserProfile from './src/screens/ViewUserProfile'; // New ViewUserProfile screen
+import ViewUserProfile from './src/screens/ViewUserProfile';
 import UserSelectionScreen from './src/screens/UserSelectionScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+
+// Notification handling
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
+
+async function registerForPushNotificationsAsync() {
+  if (Platform.OS === 'android') {
+    Notifications.setNotificationChannelAsync('default', {
+      name: 'default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#FF231F7C',
+    });
+  }
+
+  if (Device.isDevice) {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    if (finalStatus !== 'granted') {
+      Alert.alert('Permission not granted');
+      return;
+    }
+    const projectId =
+      Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
+    if (!projectId) {
+      Alert.alert('Project ID not found');
+      return;
+    }
+    try {
+      const pushToken = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+      console.log(pushToken);
+      return pushToken;
+    } catch (e) {
+      Alert.alert(`Error: ${e}`);
+    }
+  } else {
+    Alert.alert('Must use physical device for push notifications');
+  }
+}
+
+async function saveTokenToFirestore(token) {
+  const userId = FIREBASE_Auth.currentUser?.uid;
+  if (userId) {
+    await FIRESTORE_DB.collection('users').doc(userId).update({
+      expoPushToken: token,
+    });
+  }
+}
 
 function HomeStack() {
   return (
@@ -105,6 +166,40 @@ function MainTabs() {
 }
 
 export default function App() {
+  const [initializing, setInitializing] = useState(true);
+  const [user, setUser] = useState(null);
+  const notificationListener = useRef();
+  const responseListener = useRef();
+
+  useEffect(() => {
+    const unsubscribe = FIREBASE_Auth.onAuthStateChanged((user) => {
+      setUser(user);
+      if (initializing) setInitializing(false);
+    });
+
+    registerForPushNotificationsAsync().then(token => {
+      if (token) {
+        saveTokenToFirestore(token);
+      }
+    });
+
+    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+      // Alert.alert('A new FCM message arrived!', JSON.stringify(notification));
+    });
+
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log(response);
+    });
+
+    return () => {
+      unsubscribe();
+      Notifications.removeNotificationSubscription(notificationListener.current);
+      Notifications.removeNotificationSubscription(responseListener.current);
+    };
+  }, [initializing]);
+
+  if (initializing) return null;
+
   return (
     <UserProvider> 
       <NavigationContainer>
@@ -190,4 +285,3 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 });
-

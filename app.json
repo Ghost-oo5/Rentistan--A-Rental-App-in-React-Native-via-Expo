@@ -12,14 +12,19 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.abdulbasit.FYPpractice", 
+      "infoPlist": {
+        "UIBackgroundModes": ["fetch", "remote-notification"] 
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.abdulbasit.FYPpractice"
+      "package": "com.abdulbasit.FYPpractice",
+      "googleServicesFile": "./google-services.json" 
     },
     "web": {
       "favicon": "./src/assets/favicon.png"
@@ -30,7 +35,8 @@
       }
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      "expo-notifications" 
     ]
   }
 }

@@ -1,11 +1,10 @@
-// firebaseConfig.js
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, initializeAuth } from 'firebase/auth';
+import { getAuth, initializeAuth, getReactNativePersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getReactNativePersistence } from 'firebase/auth';
+import { getAnalytics } from 'firebase/analytics'; // Import for analytics
 
 const firebaseConfig = {
   apiKey: "AIzaSyCsTEeEMLQlKJxsGTaZUA6RbS3ebfMG7c0",
@@ -17,29 +16,26 @@ const firebaseConfig = {
   measurementId: "G-CD040CLPW6"
 };
 
+// Initialize Firebase
 let FIREBASE_APP;
-let FIREBASE_Auth;
-let FIRESTORE_DB;
-let FIREBASE_STORAGE;
-
 if (!getApps().length) {
   FIREBASE_APP = initializeApp(firebaseConfig);
-
-  if (Platform.OS !== 'web') {
-    FIREBASE_Auth = initializeAuth(FIREBASE_APP, {
-      persistence: getReactNativePersistence(AsyncStorage)
-    });
-  } else {
-    FIREBASE_Auth = getAuth(FIREBASE_APP);
-  }
-
-  FIRESTORE_DB = getFirestore(FIREBASE_APP);
-  FIREBASE_STORAGE = getStorage(FIREBASE_APP);
 } else {
   FIREBASE_APP = getApp();
-  FIREBASE_Auth = getAuth(FIREBASE_APP);
-  FIRESTORE_DB = getFirestore(FIREBASE_APP);
-  FIREBASE_STORAGE = getStorage(FIREBASE_APP);
 }
 
-export { FIREBASE_APP, FIREBASE_Auth, FIRESTORE_DB, FIREBASE_STORAGE };
+// Initialize Firebase services
+const FIREBASE_Auth = Platform.OS !== 'web' 
+  ? initializeAuth(FIREBASE_APP, { persistence: getReactNativePersistence(AsyncStorage) })
+  : getAuth(FIREBASE_APP);
+
+const FIRESTORE_DB = getFirestore(FIREBASE_APP);
+const FIREBASE_STORAGE = getStorage(FIREBASE_APP);
+
+// For web, optionally initialize Firebase Analytics
+let FIREBASE_ANALYTICS;
+if (Platform.OS === 'web') {
+  FIREBASE_ANALYTICS = getAnalytics(FIREBASE_APP);
+}
+
+export { FIREBASE_APP, FIREBASE_Auth, FIRESTORE_DB, FIREBASE_STORAGE, FIREBASE_ANALYTICS };
