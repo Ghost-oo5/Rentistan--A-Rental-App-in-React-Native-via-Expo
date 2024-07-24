@@ -50,6 +50,7 @@ function HomeStack() {
       <Stack.Screen name='EditProfileScreen' component={EditProfileScreen} />
       <Stack.Screen name="ViewUserProfile" component={ViewUserProfile} /> 
       <Stack.Screen name="UserSelectionScreen" component={UserSelectionScreen} />
+      <Stack.Screen name="FavoritesScreen" component={FavoritesScreen} />
     </Stack.Navigator>
   );
 }
@@ -69,9 +70,6 @@ function MainTabs() {
               break;
             case 'MainChatScreen':
               iconName = 'chat';
-              break;
-            case 'Favorites':
-              iconName = 'favorite';
               break;
             case 'Notifications':
               iconName = 'notifications';
@@ -107,7 +105,6 @@ function MainTabs() {
         })}
       />
       <Tab.Screen name="MainChatScreen" component={MainChatScreen} />
-      <Tab.Screen name="Favorites" component={FavoritesScreen} />
       <Tab.Screen name="Notifications" component={NotificationsScreen} />
     </Tab.Navigator>
   );

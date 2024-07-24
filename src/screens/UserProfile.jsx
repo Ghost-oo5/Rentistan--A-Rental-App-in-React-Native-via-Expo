@@ -18,7 +18,6 @@ const ProfileScreen = () => {
   const [whatsappNumber, setWhatsappNumber] = useState('');
   const [email, setEmail] = useState('');
 
-
   const navigation = useNavigation();
   const storage = getStorage();
 
@@ -33,8 +32,8 @@ const ProfileScreen = () => {
           setContactNumber(data.contactNumber || '');
           setAddress(data.address || '');
           setProfileImage(data.photoURL || '');
-          setWhatsappNumber(data.whatsappNumber || ''); // Add this line
-          setEmail(data.email || ''); // Add this line
+          setWhatsappNumber(data.whatsappNumber || '');
+          setEmail(data.email || '');
         }
       } else {
         setUserProfile(null);
@@ -51,7 +50,6 @@ const ProfileScreen = () => {
       unsubscribeListings();
     };
   }, []);
-
 
   const handleDeleteListing = async (id) => {
     try {
@@ -71,7 +69,6 @@ const ProfileScreen = () => {
     navigation.navigate('EditProfileScreen', { profileData: { name, contactNumber, address } });
   };
 
-  // Function to convert local file URI to a blob
   const getBlobFromUri = async (uri) => {
     try {
       const response = await FileSystem.readAsStringAsync(uri, {
@@ -128,11 +125,10 @@ const ProfileScreen = () => {
       console.log('Picker result:', pickerResult);
 
       if (!pickerResult.cancelled && pickerResult.assets.length > 0) {
-        const pickedImage = pickerResult.assets[0]; // Access the first asset in the assets array
+        const pickedImage = pickerResult.assets[0];
         const { uri } = pickedImage;
         console.log('Picked image URI:', uri);
 
-        // Check if URI is valid
         if (!uri) {
           console.error('URI is undefined or null.');
           Alert.alert('Error', 'Failed to pick image. Please try again.');
@@ -201,17 +197,21 @@ const ProfileScreen = () => {
     </View>
   );
 
-
-  // Function to handle username click
-  const handleUsernameClick = () => {
-    navigation.navigate('UserProfile', { userId: userProfile.uid }); // Adjust navigation to your user profile route
-  };
-
-
+  const renderFavoritesSection = () => (
+    <View style={styles.favoritesContainer}>
+      <TouchableOpacity 
+        style={styles.favoritesOption}
+        onPress={() => navigation.navigate('FavoritesScreen')} 
+      >
+        <Icon name="favorite" color="#FF5722" />
+        <Text style={styles.favoritesText}>Favorites</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   const renderListingItem = ({ item }) => (
     <ListItem bottomDivider>
-      <Image source={{ uri: item.image }} style={styles.image} />
+      <Image source={{ uri: item.images[0] }} style={styles.listingImage} />
       <ListItem.Content>
         <ListItem.Title>{item.title}</ListItem.Title>
         <ListItem.Subtitle>${item.price} / month</ListItem.Subtitle>
@@ -227,16 +227,17 @@ const ProfileScreen = () => {
   );
 
   return (
-    <SectionList
+    <SectionList 
       sections={[
         { title: 'Profile', data: [{}], renderItem: renderProfileSection },
-        { title: 'My Listings', data: listings, renderItem: renderListingItem }
+        { title: 'Options:', data: [{}], renderItem: renderFavoritesSection },
+        { title: 'My Listings:', data: listings, renderItem: renderListingItem }
       ]}
       keyExtractor={(item, index) => item.id || index.toString()}
       renderSectionHeader={({ section: { title } }) => (
         <Text h4 style={styles.header}>{title}</Text>
       )}
-      contentContainerStyle={styles.container}
+      ListFooterComponent={<View style={{ height: 50 }} />}
     />
   );
 };
@@ -261,7 +262,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 1.41,
     elevation: 2,
-    width: '100%',
+    width: '95%',
+    marginHorizontal: 10,
   },
   profileImage: {
     width: 100,
@@ -291,6 +293,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     marginBottom: 8,
     color: '#00ADEF',
+    marginLeft: 10,
   },
   infoContainer: {
     width: '100%',
@@ -312,7 +315,38 @@ const styles = StyleSheet.create({
     backgroundColor: '#00ADEF',
     marginTop: 12,
   },
+  favoritesContainer: {
+    paddingVertical: 5,
+    width: '95%',
+    marginHorizontal: '3%',
+    marginBottom: 10,
+  },
+  favoritesOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    elevation: 2,
+    // marginTop: 5,
+  },
+  favoritesText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: '#FF5722',
+  },
+  listingImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+  },
 });
-
 
 export default ProfileScreen;
