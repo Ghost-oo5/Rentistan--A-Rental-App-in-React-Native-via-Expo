@@ -1,5 +1,6 @@
+// src/screens/ChatRoom.jsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, ImageBackground, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, ImageBackground } from 'react-native';
 import { FIRESTORE_DB, FIREBASE_Auth } from '../../FirebaseConfig';
 import { collection, addDoc, onSnapshot, orderBy, doc, getDoc, updateDoc, query } from 'firebase/firestore';
 import { format } from 'date-fns';
@@ -16,7 +17,6 @@ const ChatRoom = ({ route, navigation }) => {
   const auth = FIREBASE_Auth;
   const user = auth.currentUser;
   const senderId = user?.uid;
-  const senderName = user?.displayName || 'User';
 
   const fetchUserNamesAndPhotos = async () => {
     try {
@@ -90,6 +90,8 @@ const ChatRoom = ({ route, navigation }) => {
   const sendMessage = async () => {
     if (inputMessage.trim() === '') return;
 
+    const senderName = userNames[senderId] || 'User';
+
     const newMessage = {
       text: inputMessage,
       createdAt: new Date(),
@@ -97,6 +99,9 @@ const ChatRoom = ({ route, navigation }) => {
         _id: senderId,
         name: senderName,
       },
+      recipientId: conversation.receiverId,
+      timestamp: new Date(),
+      senderName: senderName,
     };
 
     try {

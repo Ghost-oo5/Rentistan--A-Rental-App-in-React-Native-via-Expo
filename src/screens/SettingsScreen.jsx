@@ -1,3 +1,4 @@
+// src/screens/SettingsScreen.jsx
 import React from 'react';
 import { View, Text, Switch } from 'react-native';
 

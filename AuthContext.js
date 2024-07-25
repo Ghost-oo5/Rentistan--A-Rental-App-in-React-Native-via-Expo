@@ -1,3 +1,4 @@
+//AuthConext.js
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth } from './FirebaseConfig'; // Adjust based on your Firebase setup
 

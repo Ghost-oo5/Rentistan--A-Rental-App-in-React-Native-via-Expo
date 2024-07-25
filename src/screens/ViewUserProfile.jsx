@@ -1,3 +1,4 @@
+// src/screens/ViewUserProfile.jsx
 import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, Image, TouchableOpacity, Linking } from 'react-native';
 import { useRoute } from '@react-navigation/native';

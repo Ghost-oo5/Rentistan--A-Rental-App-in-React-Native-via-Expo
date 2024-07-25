@@ -1,3 +1,4 @@
+//index.js
 import { registerRootComponent } from 'expo';
 import App from './App'; // Adjust the path as necessary
 

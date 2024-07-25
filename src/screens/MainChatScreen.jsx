@@ -1,3 +1,4 @@
+// src/screens/MainChatScreen.jsx
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Button } from 'react-native';
 import { FIRESTORE_DB } from '../../FirebaseConfig';

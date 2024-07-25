@@ -1,3 +1,4 @@
+// src/screens/AddRental.jsx
 import React, { useState, useContext } from 'react';
 import { View, TextInput, StyleSheet, Alert, Image, ScrollView, TouchableOpacity, Text, Modal } from 'react-native';
 import { FIRESTORE_DB } from '../../FirebaseConfig';

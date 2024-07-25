@@ -1,3 +1,4 @@
+// src/screens/Home.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, Dimensions, Animated, ScrollView } from 'react-native';
 import { FIRESTORE_DB } from '../../FirebaseConfig';

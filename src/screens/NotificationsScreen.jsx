@@ -1,4 +1,4 @@
-// NotificationScreen.jsx
+// src/screens/NotificationsScreen.jsx
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 import * as Notifications from 'expo-notifications';

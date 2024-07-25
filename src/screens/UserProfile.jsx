@@ -1,3 +1,4 @@
+// src/screens/UserProfile.jsx
 import React, { useState, useEffect } from 'react';
 import { View, Image, StyleSheet, TouchableOpacity, Alert, SectionList, ScrollView } from 'react-native';
 import { FIRESTORE_DB, FIREBASE_Auth } from '../../FirebaseConfig';

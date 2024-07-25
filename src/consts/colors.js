@@ -1,3 +1,4 @@
+// src/consts/colors.js
 const COLORS = {
   white: '#FFF',
   dark: '#000',

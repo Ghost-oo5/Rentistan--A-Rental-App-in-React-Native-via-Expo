@@ -1,3 +1,4 @@
+// src/screens/EditProfileScreen.jsx
 import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, Alert } from 'react-native';
 import { FIRESTORE_DB, FIREBASE_Auth } from '../../FirebaseConfig'; // Adjust path as per your project structure

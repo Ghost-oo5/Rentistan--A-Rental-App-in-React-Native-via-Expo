@@ -1,3 +1,4 @@
+//App.js
 import React, { useEffect, useRef, useState, useContext } from 'react';
 import { View, TouchableOpacity, Image, StyleSheet, Text, Alert, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
@@ -12,7 +13,6 @@ import WelcomeScreen from './src/screens/WelcomeScreen';
 import HomeScreen from './src/screens/Home';
 import RegistrationScreen from './src/screens/RegistrationScreen';
 import ListingDetails from './src/screens/ListingDetails';
-import Checkout from './src/screens/Checkout';
 import MainChatScreen from './src/screens/MainChatScreen';
 import ChatRoom from './src/screens/ChatRoom';
 import UserProfile from './src/screens/UserProfile';
@@ -55,7 +55,7 @@ function HomeStack() {
       <Stack.Screen name="ListingDetails" component={ListingDetails} />
       <Stack.Screen name="EditListing" component={EditListing} />
       <Stack.Screen name="Checkout" component={Checkout} />
-      <Stack.Screen name="ChatRoom" component={ChatRoom} options={{ headerShown: false }} />
+      <Stack.Screen name="ChatRoom" component={ChatRoom}  />
       <Stack.Screen name="AddRental" component={AddRental} /> 
       <Stack.Screen name='EditProfileScreen' component={EditProfileScreen} />
       <Stack.Screen name="ViewUserProfile" component={ViewUserProfile} /> 

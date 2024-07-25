@@ -1,3 +1,4 @@
+// src/screens/EditListing.jsx
 import React, { useState } from 'react';
 import { View, TextInput, ScrollView, Alert, Image, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
 import { FIRESTORE_DB } from '../../FirebaseConfig';

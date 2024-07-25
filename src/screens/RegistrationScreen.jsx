@@ -1,3 +1,4 @@
+// src/screens/RegistrationScreen.jsx
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, Image, Alert } from 'react-native';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';

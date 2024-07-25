@@ -1,3 +1,4 @@
+// src/screens/WelcomeScreen.jsx
 import React from 'react';
 import { SafeAreaView, View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';

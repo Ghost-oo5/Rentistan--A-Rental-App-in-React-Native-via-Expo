@@ -1,4 +1,4 @@
-// ListingNotificationListener.js
+// src/consts/ListingNotificationListener.js
 import { useEffect, useContext } from 'react';
 import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
 import * as Notifications from 'expo-notifications';
