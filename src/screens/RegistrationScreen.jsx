@@ -1,14 +1,33 @@
-// src/screens/RegistrationScreen.jsx
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, Image, Alert } from 'react-native';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
-import { FIREBASE_APP, FIREBASE_Auth } from '../../FirebaseConfig'; // Adjust path as per your project structure
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { FIREBASE_APP } from '../../FirebaseConfig'; // Adjust path as per your project structure
+import googleAuthConfig from '../../googleAuth'; // Adjust path as per your project structure
 
-const AuthScreen = ({ email, setEmail, password, setPassword, isLogin, setIsLogin, handleAuthentication }) => {
+const AuthScreen = ({ email, setEmail, password, setPassword, name, setName, contact, setContact, isLogin, setIsLogin, handleAuthentication, handlePasswordReset, handleGoogleSignIn }) => {
   return (
     <View style={styles.authContainer}>
       <Image source={require('../assets/Rentistan-Logo.png')} style={styles.logo} resizeMode="contain" />
       <Text style={styles.title}>{isLogin ? 'Sign In' : 'Sign Up'}</Text>
+      {!isLogin && (
+        <>
+          <TextInput
+            style={styles.input}
+            value={name}
+            onChangeText={setName}
+            placeholder="Name"
+            autoCapitalize="none"
+          />
+          <TextInput
+            style={styles.input}
+            value={contact}
+            onChangeText={setContact}
+            placeholder="Contact Number"
+            autoCapitalize="none"
+          />
+        </>
+      )}
       <TextInput
         style={styles.input}
         value={email}
@@ -27,7 +46,18 @@ const AuthScreen = ({ email, setEmail, password, setPassword, isLogin, setIsLogi
         <Pressable style={styles.button} onPress={handleAuthentication}>
           <Text style={styles.buttonText}>{isLogin ? 'Sign In' : 'Sign Up'}</Text>
         </Pressable>
+        {isLogin && (
+          <Pressable style={styles.googleButton} onPress={handleGoogleSignIn}>
+            <Image source={require('../assets/google-logo.png')} style={styles.googleIcon} />
+            <Text style={styles.googleButtonText}>Sign in with Google</Text>
+          </Pressable>
+        )}
       </View>
+      {isLogin && (
+        <Text style={styles.forgotPasswordText} onPress={handlePasswordReset}>
+          Forgot Password?
+        </Text>
+      )}
       <View style={styles.bottomContainer}>
         <Text style={styles.toggleText} onPress={() => setIsLogin(!isLogin)}>
           {isLogin ? 'Need an account? Sign Up' : 'Already have an account? Sign In'}
@@ -52,11 +82,15 @@ const AuthenticatedScreen = ({ user, handleLogout }) => {
 export default function RegistrationScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [contact, setContact] = useState('');
   const [user, setUser] = useState(null);
   const [isLogin, setIsLogin] = useState(true);
 
   const auth = getAuth(FIREBASE_APP);
-  
+  const db = getFirestore(FIREBASE_APP);
+  const { promptAsync } = googleAuthConfig();
+
   useEffect(() => {
     // Clear the persisted auth state on app start
     signOut(auth);
@@ -79,14 +113,49 @@ export default function RegistrationScreen({ navigation }) {
           await signInWithEmailAndPassword(auth, email, password);
           Alert.alert('Success', 'User signed in successfully!');
         } else {
-          await createUserWithEmailAndPassword(auth, email, password);
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          const userId = userCredential.user.uid;
+
+          // Add additional user information to the Firestore database
+          await setDoc(doc(db, "users", userId), {
+            name: name,
+            contact: contact,
+            email: email,
+          });
+
           Alert.alert('Success', 'User created successfully!');
         }
         setUser(auth.currentUser);
-        navigation.navigate('MainTabs');
+        navigation.navigate('MainTabs'); // Navigate to the ProfileScreen after registration
       }
     } catch (error) {
       Alert.alert('Authentication Error', error.message);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      Alert.alert('Success', 'Password reset email sent!');
+    } catch (error) {
+      Alert.alert('Password Reset Error', error.message);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await promptAsync();
+      if (result.type === 'success') {
+        const { id_token } = result.params;
+        const credential = GoogleAuthProvider.credential(id_token);
+        await signInWithCredential(auth, credential);
+        setUser(auth.currentUser);
+        navigation.navigate('MainTabs');
+      } else {
+        Alert.alert('Google Sign-In Error', 'Google sign-in was cancelled or failed.');
+      }
+    } catch (error) {
+      Alert.alert('Google Sign-In Error', error.message);
     }
   };
 
@@ -110,9 +179,15 @@ export default function RegistrationScreen({ navigation }) {
           setEmail={setEmail}
           password={password}
           setPassword={setPassword}
+          name={name}
+          setName={setName}
+          contact={contact}
+          setContact={setContact}
           isLogin={isLogin}
           setIsLogin={setIsLogin}
           handleAuthentication={handleAuthentication}
+          handlePasswordReset={handlePasswordReset}
+          handleGoogleSignIn={handleGoogleSignIn}
         />
       )}
     </ScrollView>
@@ -156,6 +231,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
+  googleButton: {
+    backgroundColor: '#fff',
+    paddingVertical: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  googleIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 10,
+  },
+  googleButtonText: {
+    color: '#000',
+    fontSize: 16,
+  },
   buttonText: {
     color: '#fff',
     fontSize: 18,
@@ -182,6 +276,11 @@ const styles = StyleSheet.create({
   toggleText: {
     color: '#3498db',
     textAlign: 'center',
+  },
+  forgotPasswordText: {
+    color: '#3498db',
+    textAlign: 'center',
+    marginTop: 10,
   },
   emailText: {
     fontSize: 18,

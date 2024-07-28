@@ -66,6 +66,7 @@ const AddRental = ({ navigation }) => {
         });
 
         Alert.alert('Success', 'Rental listing added successfully!');
+        console.log('Success', 'Rental listing added successfully!');
         navigation.goBack();
       } catch (error) {
         console.error('Error adding rental listing: ', error);

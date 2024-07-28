@@ -36,7 +36,7 @@ import { registerForPushNotificationsAsync, saveTokenToFirestore } from './src/c
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
-    shouldPlaySound: false,
+    shouldPlaySound: true,
     shouldSetBadge: false,
   }),
 });
@@ -54,7 +54,6 @@ function HomeStack() {
       />
       <Stack.Screen name="ListingDetails" component={ListingDetails} />
       <Stack.Screen name="EditListing" component={EditListing} />
-      <Stack.Screen name="Checkout" component={Checkout} />
       <Stack.Screen name="ChatRoom" component={ChatRoom}  />
       <Stack.Screen name="AddRental" component={AddRental} /> 
       <Stack.Screen name='EditProfileScreen' component={EditProfileScreen} />

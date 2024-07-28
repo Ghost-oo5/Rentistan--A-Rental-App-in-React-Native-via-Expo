@@ -3,6 +3,7 @@
     "name": "FYP-practice",
     "slug": "FYP-practice",
     "version": "1.0.0",
+    "scheme": "rentistan",
     "orientation": "portrait",
     "icon": "./src/assets/icon.png",
     "userInterfaceStyle": "light",
@@ -20,7 +21,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/adaptive-icon.png",
+        "foregroundImage": "./src/assets/Rentistan-logo.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.abdulbasit.FYPpractice"
