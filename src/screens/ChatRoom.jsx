@@ -1,6 +1,5 @@
-// src/screens/ChatRoom.jsx
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, ImageBackground } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Image, ImageBackground } from 'react-native';
 import { FIRESTORE_DB, FIREBASE_Auth } from '../../FirebaseConfig';
 import { collection, addDoc, onSnapshot, orderBy, doc, getDoc, updateDoc, query } from 'firebase/firestore';
 import { format } from 'date-fns';
@@ -11,35 +10,37 @@ const ChatRoom = ({ route, navigation }) => {
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [userNames, setUserNames] = useState({});
-  const [userPhotos, setUserPhotos] = useState({});
+  const [userDetails, setUserDetails] = useState({});
+  const [conversationPartner, setConversationPartner] = useState({});
 
   const auth = FIREBASE_Auth;
   const user = auth.currentUser;
   const senderId = user?.uid;
 
-  const fetchUserNamesAndPhotos = async () => {
+  const fetchUserDetails = useCallback(async () => {
     try {
       const userIds = [conversation.senderId, conversation.receiverId];
-      const userNamesMap = {};
-      const userPhotosMap = {};
+      const userDetailsMap = {};
 
       for (const userId of userIds) {
         const userRef = doc(FIRESTORE_DB, 'users', userId);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
-          userNamesMap[userId] = userSnap.data().name;
-          userPhotosMap[userId] = userSnap.data().photoURL;
+          userDetailsMap[userId] = userSnap.data();
         }
       }
 
-      setUserNames(userNamesMap);
-      setUserPhotos(userPhotosMap);
+      setUserDetails(userDetailsMap);
+
+      // Determine the conversation partner's details
+      const partnerId = senderId === conversation.senderId ? conversation.receiverId : conversation.senderId;
+      setConversationPartner(userDetailsMap[partnerId] || { name: 'Unknown', photoURL: null });
+      
     } catch (error) {
-      console.error("Error fetching user names: ", error);
-      setError("Failed to load user names.");
+      console.error("Error fetching user details: ", error);
+      setError("Failed to load user details.");
     }
-  };
+  }, [conversation.senderId, conversation.receiverId, senderId]);
 
   useEffect(() => {
     if (!conversation || !conversation.id) {
@@ -48,7 +49,7 @@ const ChatRoom = ({ route, navigation }) => {
       return;
     }
 
-    fetchUserNamesAndPhotos();
+    fetchUserDetails();
 
     const q = query(
       collection(FIRESTORE_DB, 'chats', conversation.id, 'messages'),
@@ -57,7 +58,7 @@ const ChatRoom = ({ route, navigation }) => {
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       try {
-        const messages = querySnapshot.docs.map(doc => {
+        const fetchedMessages = querySnapshot.docs.map(doc => {
           const data = doc.data();
           return {
             _id: doc.id,
@@ -65,13 +66,13 @@ const ChatRoom = ({ route, navigation }) => {
             createdAt: data.createdAt?.toDate() || new Date(),
             user: {
               _id: data.user._id,
-              name: userNames[data.user._id] || 'Unknown User',
-              photoURL: userPhotos[data.user._id] || null,
+              name: userDetails[data.user._id]?.name || 'Unknown User',
+              photoURL: userDetails[data.user._id]?.photoURL || null,
             },
           };
         });
 
-        setMessages(messages);
+        setMessages(fetchedMessages);
       } catch (error) {
         console.error("Error fetching messages: ", error);
         setError("Failed to load messages.");
@@ -84,13 +85,16 @@ const ChatRoom = ({ route, navigation }) => {
       setLoading(false);
     });
 
+    // Remove the header when this screen is focused
+    navigation.setOptions({ headerShown: false });
+
     return () => unsubscribe();
-  }, [conversation?.id, userNames, userPhotos]);
+  }, [conversation?.id, fetchUserDetails, userDetails, navigation]);
 
   const sendMessage = async () => {
     if (inputMessage.trim() === '') return;
 
-    const senderName = userNames[senderId] || 'User';
+    const senderName = userDetails[senderId]?.name || 'User';
 
     const newMessage = {
       text: inputMessage,
@@ -99,7 +103,7 @@ const ChatRoom = ({ route, navigation }) => {
         _id: senderId,
         name: senderName,
       },
-      recipientId: conversation.receiverId,
+      recipientId: senderId === conversation.senderId ? conversation.receiverId : conversation.senderId,
       timestamp: new Date(),
       senderName: senderName,
     };
@@ -150,6 +154,15 @@ const ChatRoom = ({ route, navigation }) => {
   return (
     <ImageBackground source={require('../assets/bg.jpg')} style={styles.background}>
       <View style={styles.container}>
+        <View style={styles.header}>
+          <Image
+            source={{ uri: conversationPartner.photoURL }}
+            style={styles.profilePicture}
+          />
+          <Text style={styles.receiverName}>
+            {conversationPartner.name}
+          </Text>
+        </View>
         <FlatList
           data={messages}
           renderItem={renderItem}
@@ -178,6 +191,24 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    backgroundColor: '#fff',
+  },
+  profilePicture: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  receiverName: {
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   messageList: {
     flex: 1,

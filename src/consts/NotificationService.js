@@ -4,7 +4,7 @@ import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Alert, Platform } from 'react-native';
 import { FIREBASE_Auth, FIRESTORE_DB } from '../../FirebaseConfig';
-import { doc, updateDoc } from 'firebase/firestore'; // Import Firestore methods
+import { doc, setDoc, getDocs, collection } from 'firebase/firestore'; // Import Firestore methods
 
 // Set up notification handler
 Notifications.setNotificationHandler({
@@ -67,8 +67,8 @@ export async function saveTokenToFirestore(token) {
   try {
     const userId = FIREBASE_Auth.currentUser?.uid;
     if (userId) {
-      const userDocRef = doc(FIRESTORE_DB, 'users', userId);
-      await updateDoc(userDocRef, {
+      const userDocRef = doc(FIRESTORE_DB, 'pushTokens', userId);
+      await setDoc(userDocRef, {
         expoPushToken: token,
       });
       console.log('Push token saved to Firestore');
@@ -77,5 +77,29 @@ export async function saveTokenToFirestore(token) {
     }
   } catch (error) {
     console.log('Error saving token to Firestore:', error);
+  }
+}
+
+export async function sendNotificationToAllUsers(title, body) {
+  try {
+    const pushTokensCollection = collection(FIRESTORE_DB, 'pushTokens');
+    const pushTokensSnapshot = await getDocs(pushTokensCollection);
+
+    pushTokensSnapshot.forEach(async (doc) => {
+      const token = doc.data().expoPushToken;
+      if (token) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: title,
+            body: body,
+          },
+          trigger: null,
+          to: token, // Add this line to specify the recipient's token
+        });
+        console.log('Notification sent to:', token);
+      }
+    });
+  } catch (error) {
+    console.log('Error sending notification to all users:', error);
   }
 }

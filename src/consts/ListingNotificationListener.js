@@ -4,6 +4,7 @@ import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestor
 import * as Notifications from 'expo-notifications';
 import { FIRESTORE_DB } from '../../FirebaseConfig';
 import { UserContext } from './UserContext';
+import { sendNotificationToAllUsers } from './NotificationService';
 
 export function useListingNotificationListener() {
   const { user } = useContext(UserContext);
@@ -22,13 +23,11 @@ export function useListingNotificationListener() {
           if (change.type === 'added') {
             const newListing = change.doc.data();
             console.log('New listing detected:', newListing);
-            Notifications.scheduleNotificationAsync({
-              content: {
-                title: 'New Listing Added',
-                body: `A new listing has been added: ${newListing.title}`,
-              },
-              trigger: null,
-            });
+
+            sendNotificationToAllUsers(
+              'New Listing Added',
+              `A new listing has been added: ${newListing.title}`
+            );
           }
         });
       });

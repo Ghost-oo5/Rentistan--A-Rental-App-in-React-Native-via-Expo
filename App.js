@@ -1,4 +1,4 @@
-//App.js
+// App.js
 import React, { useEffect, useRef, useState, useContext } from 'react';
 import { View, TouchableOpacity, Image, StyleSheet, Text, Alert, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
@@ -31,6 +31,7 @@ import UserSelectionScreen from './src/screens/UserSelectionScreen';
 
 // Import Notification Helpers
 import { registerForPushNotificationsAsync, saveTokenToFirestore } from './src/consts/NotificationService';
+import { sendNotificationToAllUsers } from './src/consts/NotificationService'; // Ensure this import is added
 
 // Notification handling
 Notifications.setNotificationHandler({
@@ -105,7 +106,7 @@ function MainTabs() {
                 onPress={() => navigation.navigate('Profile')}
               >
                 <Image
-                  source={{ uri: user?.photoURL }}
+                  source={{ uri: user?.photoURL || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQv_oL1l60gN7zHc_fMS11OeFR-mLDi3DgjNg&s' }} // Default profile icon URL
                   style={styles.profileImage}
                 />
               </TouchableOpacity>
