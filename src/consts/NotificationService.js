@@ -1,10 +1,9 @@
-// src/consts/NotificationService.js
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Alert, Platform } from 'react-native';
 import { FIREBASE_Auth, FIRESTORE_DB } from '../../FirebaseConfig';
-import { doc, setDoc, getDocs, collection } from 'firebase/firestore'; // Import Firestore methods
+import { doc, setDoc, getDocs, collection, addDoc } from 'firebase/firestore';
 
 // Set up notification handler
 Notifications.setNotificationHandler({
@@ -85,6 +84,11 @@ export async function sendNotificationToAllUsers(title, body) {
     const pushTokensCollection = collection(FIRESTORE_DB, 'pushTokens');
     const pushTokensSnapshot = await getDocs(pushTokensCollection);
 
+    if (pushTokensSnapshot.empty) {
+      console.log('No push tokens found in Firestore.');
+      return;
+    }
+
     pushTokensSnapshot.forEach(async (doc) => {
       const token = doc.data().expoPushToken;
       if (token) {
@@ -101,5 +105,21 @@ export async function sendNotificationToAllUsers(title, body) {
     });
   } catch (error) {
     console.log('Error sending notification to all users:', error);
+  }
+}
+
+export async function saveNotificationToFirestore(type, message, userId, additionalData) {
+  try {
+    const notificationRef = collection(FIRESTORE_DB, 'notifications');
+    const docRef = await addDoc(notificationRef, {
+      type: type,
+      message: message,
+      timestamp: new Date(),
+      userId: userId,
+      additionalData: additionalData,
+    });
+    console.log('Notification saved to Firestore with ID:', docRef.id);
+  } catch (error) {
+    console.log('Error saving notification to Firestore:', error);
   }
 }

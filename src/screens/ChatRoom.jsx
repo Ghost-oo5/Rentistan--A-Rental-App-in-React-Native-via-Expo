@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Image, I
 import { FIRESTORE_DB, FIREBASE_Auth } from '../../FirebaseConfig';
 import { collection, addDoc, onSnapshot, orderBy, doc, getDoc, updateDoc, query } from 'firebase/firestore';
 import { format } from 'date-fns';
+import * as Notifications from 'expo-notifications';
 
 const ChatRoom = ({ route, navigation }) => {
   const { conversation } = route.params || {};
@@ -12,6 +13,7 @@ const ChatRoom = ({ route, navigation }) => {
   const [error, setError] = useState('');
   const [userDetails, setUserDetails] = useState({});
   const [conversationPartner, setConversationPartner] = useState({});
+  const [lastNotifiedMessageId, setLastNotifiedMessageId] = useState('');
 
   const auth = FIREBASE_Auth;
   const user = auth.currentUser;
@@ -32,7 +34,6 @@ const ChatRoom = ({ route, navigation }) => {
 
       setUserDetails(userDetailsMap);
 
-      // Determine the conversation partner's details
       const partnerId = senderId === conversation.senderId ? conversation.receiverId : conversation.senderId;
       setConversationPartner(userDetailsMap[partnerId] || { name: 'Unknown', photoURL: null });
       
@@ -73,6 +74,24 @@ const ChatRoom = ({ route, navigation }) => {
         });
 
         setMessages(fetchedMessages);
+
+        // Check if the new message is not sent by the current user
+        if (querySnapshot.docs.length > 0) {
+          const latestMessage = querySnapshot.docs[querySnapshot.docs.length - 1].data();
+          if (latestMessage.user._id !== senderId && latestMessage.id !== lastNotifiedMessageId) {
+            // Send notification for the new message
+            Notifications.scheduleNotificationAsync({
+              content: {
+                title: `New message from ${userDetails[latestMessage.user._id]?.name || 'User'}`,
+                body: latestMessage.text,
+              },
+              trigger: null,
+            });
+
+            // Update the last notified message ID
+            setLastNotifiedMessageId(latestMessage.id);
+          }
+        }
       } catch (error) {
         console.error("Error fetching messages: ", error);
         setError("Failed to load messages.");
@@ -85,11 +104,10 @@ const ChatRoom = ({ route, navigation }) => {
       setLoading(false);
     });
 
-    // Remove the header when this screen is focused
     navigation.setOptions({ headerShown: false });
 
     return () => unsubscribe();
-  }, [conversation?.id, fetchUserDetails, userDetails, navigation]);
+  }, [conversation?.id, fetchUserDetails, userDetails, senderId, lastNotifiedMessageId, navigation]);
 
   const sendMessage = async () => {
     if (inputMessage.trim() === '') return;
@@ -130,10 +148,6 @@ const ChatRoom = ({ route, navigation }) => {
       <Text style={styles.messageTime}>{format(item.createdAt, 'p')}</Text>
     </View>
   );
-
-  const handleProfilePictureClick = (userId) => {
-    navigation.navigate('ViewUserProfile', { userId });
-  };
 
   if (loading) {
     return (
@@ -254,23 +268,19 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderWidth: 1,
     borderRadius: 20,
-    marginRight: 10,
   },
   sendButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
     backgroundColor: '#007bff',
     borderRadius: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    marginLeft: 10,
   },
   sendButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
   },
   errorText: {
     color: 'red',
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 20,
   },
 });
 

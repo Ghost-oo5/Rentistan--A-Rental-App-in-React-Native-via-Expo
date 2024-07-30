@@ -1,6 +1,6 @@
 // src/screens/EditProfileScreen.jsx
 import React, { useState } from 'react';
-import { View, TextInput, StyleSheet, Alert } from 'react-native';
+import { View, TextInput, StyleSheet, Alert, ScrollView } from 'react-native';
 import { FIRESTORE_DB, FIREBASE_Auth } from '../../FirebaseConfig'; // Adjust path as per your project structure
 import { doc, setDoc } from 'firebase/firestore';
 import { Button, Text } from 'react-native-elements';
@@ -39,6 +39,7 @@ const EditProfileScreen = () => {
   };
 
   return (
+    <ScrollView>
     <View style={styles.container}>
       <Text h4 style={styles.header}>Edit Profile</Text>
       <TextInput
@@ -77,6 +78,7 @@ const EditProfileScreen = () => {
       />
       <Button title="Save Profile" onPress={handleSaveProfile} />
     </View>
+    </ScrollView>
   );
 };
 

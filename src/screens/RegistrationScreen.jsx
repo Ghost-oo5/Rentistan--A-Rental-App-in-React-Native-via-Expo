@@ -111,7 +111,7 @@ export default function RegistrationScreen({ navigation }) {
       } else {
         if (isLogin) {
           await signInWithEmailAndPassword(auth, email, password);
-          Alert.alert('Success', 'User signed in successfully!');
+          Alert.alert('Success', 'Welcome to Rentistan!');
         } else {
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
           const userId = userCredential.user.uid;
