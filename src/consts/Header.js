@@ -47,7 +47,7 @@ const Header = () => {
         <View style={styles.container}>
             <TouchableOpacity
                 style={styles.notificationButton}
-                onPress={() => navigation.navigate('Notifications')}
+                onPress={() => navigation.navigate('NotificationScreen')}
             >
                 <MaterialIcons name="notifications" size={28} color="red" />
             </TouchableOpacity>

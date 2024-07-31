@@ -1,27 +1,121 @@
-import React from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, SafeAreaView } from 'react-native';
+import { collection, query, where, onSnapshot, updateDoc, doc, deleteDoc, getDocs, getDoc } from 'firebase/firestore';
+import { FIRESTORE_DB, FIREBASE_Auth } from '../../FirebaseConfig';
 
-const bookings = [
-  // Sample data
-  { id: '1', property: 'Cozy Apartment', status: 'Confirmed' },
-  { id: '2', property: 'Modern Studio', status: 'Pending' },
-];
+const BookingRequestsScreen = () => {
+  const [bookingRequests, setBookingRequests] = useState([]);
+  const [error, setError] = useState('');
 
-const BookingManagement = () => {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Booking Management</Text>
-      <FlatList
-        data={bookings}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.booking}>
-            <Text style={styles.bookingProperty}>{item.property}</Text>
-            <Text style={styles.bookingStatus}>{item.status}</Text>
-          </View>
-        )}
-      />
+  const user = FIREBASE_Auth.currentUser;
+  const userId = user?.uid;
+
+  useEffect(() => {
+    if (!userId) {
+      setError('User not authenticated');
+      return;
+    }
+
+    const q = query(collection(FIRESTORE_DB, 'bookingRequests'), where('recipientId', '==', userId));
+
+    const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+      try {
+        const requests = await Promise.all(querySnapshot.docs.map(async (docSnap) => {
+          const requestData = docSnap.data();
+          const userDoc = await getDoc(doc(FIRESTORE_DB, 'users', requestData.requesterId));
+          return {
+            id: docSnap.id,
+            ...requestData,
+            requesterName: userDoc.exists() ? userDoc.data().name : 'Unknown',
+          };
+        }));
+        setBookingRequests(requests);
+      } catch (error) {
+        console.error("Error fetching booking requests: ", error);
+        setError("Failed to load booking requests.");
+      }
+    }, (error) => {
+      console.error("Snapshot error: ", error);
+      setError("Failed to load booking requests.");
+    });
+
+    return () => unsubscribe();
+  }, [userId]);
+
+  const handleResponse = async (requestId, status) => {
+    try {
+      const requestRef = doc(FIRESTORE_DB, 'bookingRequests', requestId);
+
+      if (status === 'rejected') {
+        await deleteDoc(requestRef);
+        console.log('Booking request rejected:', requestId);
+      } else if (status === 'accepted') {
+        await updateDoc(requestRef, { status });
+        console.log('Booking request accepted:', requestId);
+      }
+
+      // Refresh data to ensure the latest state
+      const q = query(collection(FIRESTORE_DB, 'bookingRequests'), where('recipientId', '==', userId));
+      const querySnapshot = await getDocs(q);
+      const requests = await Promise.all(querySnapshot.docs.map(async (docSnap) => {
+        const requestData = docSnap.data();
+        const userDoc = await getDoc(doc(FIRESTORE_DB, 'users', requestData.requesterId));
+        return {
+          id: docSnap.id,
+          ...requestData,
+          requesterName: userDoc.exists() ? userDoc.data().name : 'Unknown',
+        };
+      }));
+      setBookingRequests(requests);
+
+      alert(status === 'accepted' ? 'Booking request accepted' : 'Booking request rejected');
+
+    } catch (error) {
+      console.error("Error handling booking request: ", error);
+      setError("Failed to handle booking request.");
+    }
+  };
+
+  const renderItem = ({ item }) => (
+    <View style={styles.requestContainer}>
+      <Text>Requester: {item.requesterName}</Text>
+      <Text>Message: {item.message}</Text>
+      <Text>Status: {item.status}</Text>
+      {item.status === 'pending' && (
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.acceptButton}
+            onPress={() => handleResponse(item.id, 'accepted')}
+          >
+            <Text style={styles.buttonText}>Accept</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.rejectButton}
+            onPress={() => handleResponse(item.id, 'rejected')}
+          >
+            <Text style={styles.buttonText}>Reject</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
+  );
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.errorText}>{error}</Text>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <FlatList
+        data={bookingRequests}
+        renderItem={renderItem}
+        keyExtractor={item => item.id}
+      />
+    </SafeAreaView>
   );
 };
 
@@ -30,23 +124,36 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  title: {
-    fontSize: 24,
-    marginBottom: 20,
-  },
-  booking: {
+  requestContainer: {
     padding: 16,
-    backgroundColor: '#fff',
-    marginBottom: 10,
+    marginBottom: 8,
     borderRadius: 8,
+    backgroundColor: '#f9f9f9',
+    borderColor: '#ddd',
+    borderWidth: 1,
   },
-  bookingProperty: {
-    fontSize: 18,
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
   },
-  bookingStatus: {
-    fontSize: 16,
-    color: 'gray',
+  acceptButton: {
+    backgroundColor: '#00ADEF',
+    padding: 10,
+    borderRadius: 5,
+  },
+  rejectButton: {
+    backgroundColor: '#FF4D4D',
+    padding: 10,
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: '#fff',
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
   },
 });
 
-export default BookingManagement;
+export default BookingRequestsScreen;

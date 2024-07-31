@@ -22,7 +22,11 @@ import ViewUserProfile from './src/screens/ViewUserProfile';
 import AddRental from './src/screens/AddRental';
 import ManageListings from './src/screens/ManageListings'; // Add Manage Bookings screen
 import EditListing from './src/screens/EditListing';
-
+import FavoriteScreen from './src/screens/FavoriteScreen';
+import TenantProfile from './src/screens/TenantProfile';
+import ChatRoom from './src/screens/ChatRoom';
+import UserSelectionScreen from './src/screens/UserSelectionScreen';
+import BookingRequestsScreen from './src/screens/BookingRequestsScreen';
 
 
 const Stack = createStackNavigator();
@@ -44,6 +48,12 @@ function MainNavigator() {
       <Stack.Screen name="AddRental" component={AddRental} options={{ title: 'AddRental' }} />
       <Stack.Screen name="ManageListings" component={ManageListings} options={{ title: 'ManageListings' }} />
       <Stack.Screen name="EditListing" component={EditListing} options={{ title: 'EditListing' }} />
+      <Stack.Screen name="FavoriteScreen" component={FavoriteScreen} options={{ title: 'FavoriteScreen' }} />
+      <Stack.Screen name="TenantProfile" component={TenantProfile} options={{ title: 'TenantProfile' }} />
+      <Stack.Screen name="ChatRoom" component={ChatRoom} options={{ title: 'ChatRoom' }} />
+      <Stack.Screen name="UserSelectionScreen" component={UserSelectionScreen} options={{ title: 'UserSelectionScreen' }} />
+      <Stack.Screen name="BookingRequests" component={BookingRequestsScreen} />
+
     </Stack.Navigator>
   );
 }

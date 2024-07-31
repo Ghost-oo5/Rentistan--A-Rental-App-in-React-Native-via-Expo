@@ -1,127 +1,248 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  SafeAreaView,
+  StatusBar,
+  Dimensions,
+  Image,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { FIRESTORE_DB } from '../../FirebaseConfig'; // Adjust the path if needed
-import { doc, getDoc } from 'firebase/firestore';
-import PropTypes from 'prop-types';
+import Swiper from 'react-native-swiper';
+import { FIRESTORE_DB, FIREBASE_Auth } from '../../FirebaseConfig';
+import { collection, query, where, getDocs, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
+import { FAB, SearchBar } from 'react-native-elements';
 
-const ManageListings = ({ item }) => {
-  const [availability, setAvailability] = useState('Loading...');
+const { width } = Dimensions.get('screen');
+
+const ManageListings = ({ navigation }) => {
+  const [listings, setListings] = useState([]);
+  const [search, setSearch] = useState('');
+  const [filteredListings, setFilteredListings] = useState([]);
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
-    if (!item) return;
-
-    const fetchAvailability = async () => {
-      try {
-        const listingDoc = await getDoc(doc(FIRESTORE_DB, 'rentals', item.id));
-        if (listingDoc.exists()) {
-          const listingData = listingDoc.data();
-          setAvailability(listingData.availability || 'Unknown Status');
+    const fetchUserListings = async () => {
+      const unsubscribeAuth = FIREBASE_Auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          setUserId(user.uid);
+          const userQuery = query(collection(FIRESTORE_DB, 'rentals'), where('postedBy', '==', user.uid));
+          const unsubscribeListings = onSnapshot(userQuery, (snapshot) => {
+            const listingsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setListings(listingsList);
+            setFilteredListings(listingsList);
+          });
+          
+          return () => {
+            unsubscribeListings();
+          };
         } else {
-          setAvailability('Unknown Status');
+          setUserId(null);
+          setListings([]);
+          setFilteredListings([]);
         }
-      } catch (error) {
-        console.error('Error fetching availability: ', error);
-        setAvailability('Error fetching status');
-      }
+      });
+
+      return () => {
+        unsubscribeAuth();
+      };
     };
 
-    fetchAvailability();
-  }, [item]);
+    fetchUserListings();
+  }, []);
 
-  if (!item) {
-    return <Text>Loading...</Text>;
-  }
+  const handleDelete = async (id) => {
+    try {
+      await deleteDoc(doc(FIRESTORE_DB, 'rentals', id));
+      setListings(listings.filter((listing) => listing.id !== id));
+      setFilteredListings(filteredListings.filter((listing) => listing.id !== id));
+      Alert.alert('Success', 'Listing deleted successfully');
+    } catch (error) {
+      console.error('Error deleting listing: ', error);
+      Alert.alert('Error', 'Failed to delete listing');
+    }
+  };
 
-  const handleOwnerProfileClick = (postedBy) => {
-    // Handle owner profile click
-    console.log('Owner Profile Clicked:', postedBy);
+  const handleEdit = (item) => {
+    navigation.navigate('EditListing', { item });
+  };
+
+  const handleSearch = (search) => {
+    setSearch(search);
+    if (search === '') {
+      setFilteredListings(listings);
+    } else {
+      const filteredData = listings.filter((item) =>
+        item.title.toLowerCase().includes(search.toLowerCase())
+      );
+      setFilteredListings(filteredData);
+    }
+  };
+
+  const handleFabPress = () => {
+    navigation.navigate('AddRental');
   };
 
   return (
-    <View style={styles.detailsContainer}>
-      <Text style={styles.title}>{item.title}</Text>
-      <Text style={styles.price}>PKR {item.price} / month</Text>
-      <Text style={styles.description}>{item.description}</Text>
-      <Text
-        style={[
-          styles.status,
-          availability === 'Available' ? styles.availableStatus : styles.rentedStatus,
-        ]}
-      >
-        Status: {availability}
-      </Text>
-
-      <TouchableOpacity onPress={() => handleOwnerProfileClick(item.postedBy)}>
-        <Text style={styles.postedBy}>Posted by: {item.userName}</Text>
-      </TouchableOpacity>
-
-      <View style={styles.facilitiesContainer}>
-        <View style={styles.facility}>
-          <Icon name="hotel" size={18} color="#1e90ff" />
-          <Text style={styles.facilityText}>{item.rooms} Rooms</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+      <StatusBar translucent={false} backgroundColor="#fff" barStyle="dark-content" />
+      <SearchBar
+        placeholder="Search Listings..."
+        onChangeText={handleSearch}
+        value={search}
+        lightTheme
+        round
+        containerStyle={styles.searchBarContainer}
+        inputContainerStyle={styles.searchBarInput}
+      />
+      <ScrollView>
+        <View style={styles.container}>
+          {filteredListings.map((item) => (
+            <View key={item.id} style={styles.listingContainer}>
+              <View style={styles.imageContainer}>
+                {item.images && item.images.length > 0 ? (
+                  <Swiper style={styles.swiper} showsButtons={false} autoplay loop>
+                    {item.images.map((image, index) => (
+                      <Image key={index} source={{ uri: image }} style={styles.image} />
+                    ))}
+                  </Swiper>
+                ) : (
+                  <View style={styles.noImageContainer}>
+                    <Text style={styles.noImageText}>No Images Available</Text>
+                  </View>
+                )}
+              </View>
+              <View style={styles.detailsContainer}>
+                <Text style={styles.title}>{item.title}</Text>
+                <Text style={styles.price}>PKR {item.price} / month</Text>
+                <Text style={styles.description}>{item.description}</Text>
+                <Text
+                  style={[
+                    styles.status,
+                    item.availability === 'Available' ? styles.availableStatus : styles.rentedStatus,
+                  ]}
+                >
+                  Status: {item.availability}
+                </Text>
+                <View style={styles.facilitiesContainer}>
+                  <View style={styles.facility}>
+                    <Icon name="hotel" size={18} color="#1e90ff" />
+                    <Text style={styles.facilityText}>{item.rooms} Rooms</Text>
+                  </View>
+                  <View style={styles.facility}>
+                    <Icon name="kitchen" size={18} color="#1e90ff" />
+                    <Text style={styles.facilityText}>{item.kitchen} Kitchen</Text>
+                  </View>
+                  <View style={styles.facility}>
+                    <Icon name="bathtub" size={18} color="#1e90ff" />
+                    <Text style={styles.facilityText}>{item.washroom} Washrooms</Text>
+                  </View>
+                  <View style={styles.facility}>
+                    <Icon name="aspect-ratio" size={18} color="#1e90ff" />
+                    <Text style={styles.facilityText}>{item.size} m²</Text>
+                  </View>
+                  <View style={styles.facility}>
+                    <Icon name="map" size={18} color="#1e90ff" />
+                    <Text style={styles.facilityText}>{item.area} Area</Text>
+                  </View>
+                </View>
+                <View style={styles.actionButtonsContainer}>
+                  <TouchableOpacity style={styles.actionButton} onPress={() => handleEdit(item)}>
+                    <Text style={styles.actionButtonText}>Edit</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.actionButton, styles.deleteButton]} onPress={() => handleDelete(item.id)}>
+                    <Text style={styles.actionButtonText}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          ))}
         </View>
-        <View style={styles.facility}>
-          <Icon name="kitchen" size={18} color="#1e90ff" />
-          <Text style={styles.facilityText}>{item.kitchen} Kitchen</Text>
-        </View>
-        <View style={styles.facility}>
-          <Icon name="bathtub" size={18} color="#1e90ff" />
-          <Text style={styles.facilityText}>{item.washroom} Washrooms</Text>
-        </View>
-        <View style={styles.facility}>
-          <Icon name="aspect-ratio" size={18} color="#1e90ff" />
-          <Text style={styles.facilityText}>{item.size} m²</Text>
-        </View>
-        <View style={styles.facility}>
-          <Icon name="map" size={18} color="#1e90ff" />
-          <Text style={styles.facilityText}>{item.area} Area</Text>
-        </View>
-      </View>
-    </View>
+      </ScrollView>
+      <FAB
+        title="Add Rental"
+        placement="right"
+        onPress={handleFabPress}
+        icon={{ name: 'add', color: 'white' }}
+        color="#00ADEF"
+        style={styles.fab}
+      />
+    </SafeAreaView>
   );
 };
 
-ManageListings.propTypes = {
-  item: PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    title: PropTypes.string.isRequired,
-    price: PropTypes.number.isRequired,
-    description: PropTypes.string.isRequired,
-    postedBy: PropTypes.string.isRequired,
-    userName: PropTypes.string.isRequired,
-    rooms: PropTypes.number.isRequired,
-    kitchen: PropTypes.number.isRequired,
-    washroom: PropTypes.number.isRequired,
-    size: PropTypes.number.isRequired,
-    area: PropTypes.string.isRequired,
-  }).isRequired,
-};
-
 const styles = StyleSheet.create({
-  detailsContainer: {
+  container: {
     padding: 20,
   },
+  searchBarContainer: {
+    backgroundColor: 'transparent',
+    borderBottomColor: 'transparent',
+    borderTopColor: 'transparent',
+    paddingHorizontal: 20,
+    paddingTop: 10,
+  },
+  searchBarInput: {
+    backgroundColor: '#f0f0f0',
+  },
+  listingContainer: {
+    marginBottom: 20,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    overflow: 'hidden',
+    elevation: 2,
+  },
+  imageContainer: {
+    position: 'relative',
+  },
+  swiper: {
+    height: width * 0.6,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  image: {
+    width: '100%',
+    height: width * 0.6,
+    resizeMode: 'cover',
+  },
+  noImageContainer: {
+    width: '100%',
+    height: width * 0.6,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#e0e0e0',
+  },
+  noImageText: {
+    color: '#888',
+    fontSize: 16,
+  },
+  detailsContainer: {
+    padding: 10,
+  },
   title: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
   },
   price: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#1e90ff',
-    marginVertical: 10,
+    marginVertical: 5,
   },
   description: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#777',
-    marginVertical: 10,
+    marginVertical: 5,
   },
   status: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
-    marginVertical: 8,
+    marginVertical: 5,
   },
   availableStatus: {
     color: '#25d366',
@@ -129,15 +250,10 @@ const styles = StyleSheet.create({
   rentedStatus: {
     color: 'red',
   },
-  postedBy: {
-    fontSize: 16,
-    color: '#1e90ff',
-    textDecorationLine: 'underline',
-  },
   facilitiesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginVertical: 10,
+    marginVertical: 5,
   },
   facility: {
     flexDirection: 'row',
@@ -149,6 +265,27 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     color: '#888',
   },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  actionButton: {
+    flex: 1,
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 5,
+    margin: 5,
+    backgroundColor: '#1e90ff',
+  },
+  deleteButton: {
+    backgroundColor: '#dc143c',
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+ 
 });
 
 export default ManageListings;

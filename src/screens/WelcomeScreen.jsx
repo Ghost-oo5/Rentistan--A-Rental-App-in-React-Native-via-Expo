@@ -9,7 +9,7 @@ export default function WelcomeScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.topSection}>
         <Text style={styles.TitleText}>Rentistan</Text>
-        <Text style={styles.H2Text}>Where Nalla Berozgar can have his own home</Text>
+        <Text style={styles.H2Text}>Let's find you a perfect home :)</Text>
       </View>
       <Image source={favicon} style={styles.logoImage} />
       <TouchableOpacity

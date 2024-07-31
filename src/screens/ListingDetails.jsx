@@ -101,6 +101,7 @@ const ListingDetails = ({ route, navigation }) => {
     };
     navigation.navigate('ChatRoom', { conversation });
   };
+  
 
   const handleCallClick = () => {
     if (userProfile.contactNumber) {

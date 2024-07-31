@@ -28,19 +28,13 @@ const RenterDashboard = ({ navigation }) => {
 
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate('FavoritesScreen')}
+          onPress={() => navigation.navigate('FavoriteScreen')} 
         >
           <MaterialIcons name="favorite" size={30} color="#ffffff" />
           <Text style={styles.cardText}>Favorites</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => navigation.navigate('TenantProfile')}
-        >
-          <MaterialIcons name="person" size={30} color="#ffffff" />
-          <Text style={styles.cardText}>Profile</Text>
-        </TouchableOpacity>
+        
       </ScrollView>
     </View>
   );

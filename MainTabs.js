@@ -6,7 +6,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import HomeScreen from './src/screens/Home';
 import MainChatScreen from './src/screens/MainChatScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
-import FavoritesScreen from './src/screens/FavoritesScreen';
+import FavoritesScreen from './src/screens/FavoriteScreen';
 import BookingManagement from './src/screens/ManageBookings'; // Add Manage Bookings screen
 import ManageListings from './src/screens/ManageListings'; // Add Manage Bookings screen
 import RenterDashboard from './src/screens/RenterDashboard'; // Same as HomeScreen for tenants

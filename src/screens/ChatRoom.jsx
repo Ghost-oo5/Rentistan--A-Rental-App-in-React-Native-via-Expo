@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Image, ImageBackground } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Image, ImageBackground, SafeAreaView, Modal } from 'react-native';
 import { FIRESTORE_DB, FIREBASE_Auth } from '../../FirebaseConfig';
 import { collection, addDoc, onSnapshot, orderBy, doc, getDoc, updateDoc, query } from 'firebase/firestore';
 import { format } from 'date-fns';
@@ -14,7 +14,9 @@ const ChatRoom = ({ route, navigation }) => {
   const [userDetails, setUserDetails] = useState({});
   const [conversationPartner, setConversationPartner] = useState({});
   const [lastNotifiedMessageId, setLastNotifiedMessageId] = useState('');
-
+  const [showBookingRequest, setShowBookingRequest] = useState(false);
+  const [bookingRequestMessage, setBookingRequestMessage] = useState('');
+  
   const auth = FIREBASE_Auth;
   const user = auth.currentUser;
   const senderId = user?.uid;
@@ -28,14 +30,14 @@ const ChatRoom = ({ route, navigation }) => {
         const userRef = doc(FIRESTORE_DB, 'users', userId);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
-          userDetailsMap[userId] = userSnap.data();
+          userDetailsMap[userId] = { ...userSnap.data(), _id: userId };
         }
       }
 
       setUserDetails(userDetailsMap);
 
       const partnerId = senderId === conversation.senderId ? conversation.receiverId : conversation.senderId;
-      setConversationPartner(userDetailsMap[partnerId] || { name: 'Unknown', photoURL: null });
+      setConversationPartner(userDetailsMap[partnerId] || { name: 'Unknown', photoURL: null, _id: partnerId });
       
     } catch (error) {
       console.error("Error fetching user details: ", error);
@@ -75,11 +77,9 @@ const ChatRoom = ({ route, navigation }) => {
 
         setMessages(fetchedMessages);
 
-        // Check if the new message is not sent by the current user
         if (querySnapshot.docs.length > 0) {
           const latestMessage = querySnapshot.docs[querySnapshot.docs.length - 1].data();
           if (latestMessage.user._id !== senderId && latestMessage.id !== lastNotifiedMessageId) {
-            // Send notification for the new message
             Notifications.scheduleNotificationAsync({
               content: {
                 title: `New message from ${userDetails[latestMessage.user._id]?.name || 'User'}`,
@@ -88,7 +88,6 @@ const ChatRoom = ({ route, navigation }) => {
               trigger: null,
             });
 
-            // Update the last notified message ID
             setLastNotifiedMessageId(latestMessage.id);
           }
         }
@@ -142,6 +141,26 @@ const ChatRoom = ({ route, navigation }) => {
     }
   };
 
+  const sendBookingRequest = async () => {
+    try {
+      const bookingRequest = {
+        requesterId: senderId,
+        recipientId: senderId === conversation.senderId ? conversation.receiverId : conversation.senderId,
+        status: 'pending',
+        message: bookingRequestMessage,
+        createdAt: new Date(),
+      };
+  
+      await addDoc(collection(FIRESTORE_DB, 'bookingRequests'), bookingRequest);
+      alert('Booking request sent successfully!');
+      setBookingRequestMessage('');
+      setShowBookingRequest(false);
+    } catch (error) {
+      console.error("Error sending booking request: ", error);
+      setError("Failed to send booking request.");
+    }
+  };
+
   const renderItem = ({ item }) => (
     <View style={[styles.messageBubble, item.user._id === senderId ? styles.userBubble : styles.agentBubble]}>
       <Text style={styles.messageText}>{item.text}</Text>
@@ -151,31 +170,39 @@ const ChatRoom = ({ route, navigation }) => {
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <Text>Loading...</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <Text style={styles.errorText}>{error}</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
     <ImageBackground source={require('../assets/bg.jpg')} style={styles.background}>
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <Image
             source={{ uri: conversationPartner.photoURL }}
             style={styles.profilePicture}
           />
-          <Text style={styles.receiverName}>
-            {conversationPartner.name}
-          </Text>
+          <TouchableOpacity onPress={() => {
+            if (conversationPartner._id) {
+              navigation.navigate('ViewUserProfile', { userId: conversationPartner._id });
+            } else {
+              console.error("No user ID available for conversation partner");
+            }
+          }}>
+            <Text style={styles.receiverName}>
+              {conversationPartner.name}
+            </Text>
+          </TouchableOpacity>
         </View>
         <FlatList
           data={messages}
@@ -184,6 +211,9 @@ const ChatRoom = ({ route, navigation }) => {
           style={styles.messageList}
         />
         <View style={styles.inputContainer}>
+          <TouchableOpacity onPress={() => setShowBookingRequest(!showBookingRequest)} style={styles.optionsButton}>
+            <Text style={styles.optionsButtonText}>⋮</Text>
+          </TouchableOpacity>
           <TextInput
             style={styles.input}
             value={inputMessage}
@@ -194,7 +224,30 @@ const ChatRoom = ({ route, navigation }) => {
             <Text style={styles.sendButtonText}>Send</Text>
           </TouchableOpacity>
         </View>
-      </View>
+        <Modal
+          transparent={true}
+          visible={showBookingRequest}
+          onRequestClose={() => setShowBookingRequest(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Booking Request</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Enter your booking request message"
+                value={bookingRequestMessage}
+                onChangeText={setBookingRequestMessage}
+              />
+              <TouchableOpacity style={styles.modalButton} onPress={sendBookingRequest}>
+                <Text style={styles.modalButtonText}>Send Request</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalButton} onPress={() => setShowBookingRequest(false)}>
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      </SafeAreaView>
     </ImageBackground>
   );
 };
@@ -210,6 +263,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
+    paddingTop: 40,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
     backgroundColor: '#fff',
@@ -226,61 +280,104 @@ const styles = StyleSheet.create({
   },
   messageList: {
     flex: 1,
-    paddingHorizontal: 10,
-    paddingTop: 10,
+    padding: 10,
   },
   messageBubble: {
-    maxWidth: '80%',
     padding: 10,
-    marginBottom: 10,
-    borderRadius: 8,
+    marginVertical: 5,
+    borderRadius: 15,
   },
   userBubble: {
+    backgroundColor: '#DCF8C6',
     alignSelf: 'flex-end',
-    backgroundColor: '#007bff',
+    borderBottomRightRadius: 0,
   },
   agentBubble: {
+    backgroundColor: '#FFF',
     alignSelf: 'flex-start',
-    backgroundColor: '#6c757d',
+    borderBottomLeftRadius: 0,
   },
   messageText: {
-    color: '#fff',
+    fontSize: 16,
   },
   messageTime: {
-    color: '#fff',
-    fontSize: 10,
+    fontSize: 12,
+    color: '#666',
     marginTop: 5,
-    alignSelf: 'flex-end',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    padding: 10,
     borderTopWidth: 1,
     borderTopColor: '#ccc',
     backgroundColor: '#fff',
   },
+  optionsButton: {
+    marginRight: 10,
+  },
+  optionsButtonText: {
+    fontSize: 24,
+    color: '#888',
+  },
   input: {
     flex: 1,
-    height: 40,
-    paddingHorizontal: 10,
-    borderColor: '#ccc',
+    padding: 10,
     borderWidth: 1,
+    borderColor: '#ccc',
     borderRadius: 20,
+    marginRight: 10,
   },
   sendButton: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#00ADEF',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 20,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    marginLeft: 10,
   },
   sendButtonText: {
     color: '#fff',
+    fontWeight: 'bold',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 20,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalInput: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
+  },
+  modalButton: {
+    backgroundColor: '#00ADEF',
+    padding: 10,
+    borderRadius: 8,
+    marginVertical: 5,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
   errorText: {
     color: 'red',
+    textAlign: 'center',
+    marginTop: 20,
   },
 });
 

@@ -1,4 +1,3 @@
-// src/screens/UserProfile.jsx
 import React, { useState, useEffect } from 'react';
 import { View, Image, StyleSheet, TouchableOpacity, Alert, SectionList, ScrollView } from 'react-native';
 import { FIRESTORE_DB, FIREBASE_Auth } from '../../FirebaseConfig';
@@ -18,6 +17,9 @@ const ProfileScreen = () => {
   const [profileImage, setProfileImage] = useState('');
   const [whatsappNumber, setWhatsappNumber] = useState('');
   const [email, setEmail] = useState('');
+  const [paymentHistory, setPaymentHistory] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [profileType, setProfileType] = useState(''); // Add state for profileType
 
   const navigation = useNavigation();
   const storage = getStorage();
@@ -35,8 +37,9 @@ const ProfileScreen = () => {
           setProfileImage(data.photoURL || '');
           setWhatsappNumber(data.whatsappNumber || '');
           setEmail(data.email || '');
+          setProfileType(data.profileType || ''); // Set profileType based on user data
         }
-        
+
         // Fetch user's listings
         const userQuery = query(collection(FIRESTORE_DB, 'rentals'), where('postedBy', '==', user.uid));
         const unsubscribeListings = onSnapshot(userQuery, (snapshot) => {
@@ -44,8 +47,24 @@ const ProfileScreen = () => {
           setListings(listingsList);
         });
 
+        // Fetch user's payment history
+        const paymentQuery = query(collection(FIRESTORE_DB, 'payments'), where('userId', '==', user.uid));
+        const unsubscribePayments = onSnapshot(paymentQuery, (snapshot) => {
+          const paymentsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setPaymentHistory(paymentsList);
+        });
+
+        // Fetch user's reviews
+        const reviewsQuery = query(collection(FIRESTORE_DB, 'reviews'), where('userId', '==', user.uid));
+        const unsubscribeReviews = onSnapshot(reviewsQuery, (snapshot) => {
+          const reviewsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setReviews(reviewsList);
+        });
+
         return () => {
           unsubscribeListings();
+          unsubscribePayments();
+          unsubscribeReviews();
         };
       } else {
         setUserProfile(null);
@@ -73,6 +92,18 @@ const ProfileScreen = () => {
 
   const handleEditProfile = () => {
     navigation.navigate('EditProfileScreen', { profileData: { name, contactNumber, address } });
+  };
+
+  const handleViewPaymentHistory = () => {
+    navigation.navigate('PaymentHistoryScreen', { paymentHistory });
+  };
+
+  const handleViewReviews = () => {
+    navigation.navigate('ReviewsScreen', { reviews });
+  };
+
+  const handleSupport = () => {
+    navigation.navigate('SupportScreen');
   };
 
   const getBlobFromUri = async (uri) => {
@@ -192,73 +223,73 @@ const ProfileScreen = () => {
         </View>
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>WhatsApp Number:</Text>
-          <Text style={styles.infoValue}>{whatsappNumber || 'Not provided'}</Text>
+          <Text style={styles.infoValue}>{whatsappNumber}</Text>
         </View>
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Email:</Text>
-          <Text style={styles.infoValue}>{email || 'Not provided'}</Text>
+          <Text style={styles.infoValue}>{email}</Text>
         </View>
-        <Button title="Edit Information" onPress={handleEditProfile} buttonStyle={styles.editButton} />
       </View>
+      <Button title="Edit Profile" buttonStyle={styles.editButton} onPress={handleEditProfile} />
     </View>
   );
 
-  const renderFavoritesSection = () => (
+  const renderListings = () => (
+    <SectionList
+      sections={[
+        { title: 'My Listings', data: listings },
+      ]}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => (
+        <ListItem
+          title={item.title}
+          subtitle={`Price: PKR ${item.price}`}
+          bottomDivider
+          rightElement={
+            <TouchableOpacity onPress={() => handleModifyListing(item)}>
+              <Icon name="edit" />
+            </TouchableOpacity>
+          }
+        />
+      )}
+      renderSectionHeader={({ section: { title } }) => (
+        <ListItem containerStyle={styles.sectionHeader}>
+          <Text style={styles.sectionHeaderText}>{title}</Text>
+        </ListItem>
+      )}
+    />
+  );
+
+  const renderPaymentHistory = () => (
     <View style={styles.favoritesContainer}>
-      <TouchableOpacity 
-        style={styles.favoritesOption}
-        onPress={() => navigation.navigate('FavoritesScreen')} 
-      >
-        <Icon name="favorite" color="#FF5722" />
-        <Text style={styles.favoritesText}>Favorites</Text>
+      <TouchableOpacity style={styles.favoritesOption} onPress={handleViewPaymentHistory}>
+        <Icon name="credit-card" type="material" color="#00ADEF" />
+        <Text style={styles.favoritesText}>Payment History</Text>
       </TouchableOpacity>
     </View>
   );
 
-  const renderListingItem = ({ item }) => (
-    <ListItem bottomDivider>
-      <Image source={{ uri: item.images[0] }} style={styles.listingImage} />
-      <ListItem.Content>
-        <ListItem.Title>{item.title}</ListItem.Title>
-        <ListItem.Subtitle>${item.price} / month</ListItem.Subtitle>
-        <ListItem.Subtitle>{item.description}</ListItem.Subtitle>
-      </ListItem.Content>
-      <TouchableOpacity onPress={() => handleDeleteListing(item.id)}>
-        <Icon name="delete" color="red" />
+  const renderReviews = () => (
+    <View style={styles.favoritesContainer}>
+      <TouchableOpacity style={styles.favoritesOption} onPress={handleViewReviews}>
+        <Icon name="star" type="material" color="#00ADEF" />
+        <Text style={styles.favoritesText}>Reviews</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => handleModifyListing(item)}>
-        <Icon name="edit" color="blue" />
-      </TouchableOpacity>
-    </ListItem>
+    </View>
   );
 
-  const renderListingsSection = () => (
-    <View style={styles.listingsContainer}>
-      <Text h4 style={styles.header}>Your Listings</Text>
-      <SectionList
-        sections={[{ title: 'Listings', data: listings }]}
-        keyExtractor={(item) => item.id}
-        renderItem={renderListingItem}
-        renderSectionHeader={({ section: { title } }) => (
-          <Text style={styles.sectionHeader}>{title}</Text>
-        )}
-      />
-    </View>
+  const renderSupport = () => (
+    <Button title="Support" buttonStyle={styles.editButton} onPress={handleSupport} />
   );
 
   return (
-    <SectionList 
-      sections={[
-        { title: 'Profile', data: [{}], renderItem: renderProfileSection },
-        { title: 'Options:', data: [{}], renderItem: renderFavoritesSection },
-        { title: 'My Listings:', data: listings, renderItem: renderListingItem }
-      ]}
-      keyExtractor={(item, index) => item.id || index.toString()}
-      renderSectionHeader={({ section: { title } }) => (
-        <Text h4 style={styles.header}>{title}</Text>
-      )}
-      ListFooterComponent={<View style={{ height: 50 }} />}
-    />
+    <ScrollView style={styles.container}>
+      {renderProfileSection()}
+      {/* {renderListings()} */}
+      {renderPaymentHistory()}
+      {renderReviews()}
+      {renderSupport()}
+    </ScrollView>
   );
 };
 
@@ -275,10 +306,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 1.41,
     elevation: 2,
@@ -348,24 +376,21 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 1.41,
     elevation: 2,
-    // marginTop: 5,
   },
   favoritesText: {
     marginLeft: 8,
     fontSize: 16,
     color: '#FF5722',
   },
-  listingImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
+  sectionHeader: {
+    backgroundColor: '#f0f0f0',
+  },
+  sectionHeaderText: {
+    fontWeight: 'bold',
   },
 });
 

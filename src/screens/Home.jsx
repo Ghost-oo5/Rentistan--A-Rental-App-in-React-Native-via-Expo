@@ -257,14 +257,14 @@ const Home = ({ navigation }) => {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
       />
-      <FAB
+      {/* <FAB
         title="Add Rental"
         placement="right"
         onPress={handleFabPress}
         icon={{ name: 'add', color: 'white' }}
         color="#00ADEF"
         style={styles.fab}
-      />
+      /> */}
     </View>
   );
 };

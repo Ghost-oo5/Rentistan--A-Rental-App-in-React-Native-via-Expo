@@ -1,49 +1,86 @@
-// src/screens/MainChatScreen.jsx
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Button } from 'react-native';
 import { FIRESTORE_DB } from '../../FirebaseConfig';
-import { collection, onSnapshot, query } from 'firebase/firestore';
+import { collection, onSnapshot, query, doc, getDoc } from 'firebase/firestore';
 
 const MainChatScreen = ({ navigation }) => {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [userDetails, setUserDetails] = useState({});
 
   useEffect(() => {
-    console.log('MainChatScreen mounted');
-    const q = query(collection(FIRESTORE_DB, 'chats'));
+    // Replace with your method to get current user ID
+    const fetchCurrentUserId = async () => {
+      // Example: setCurrentUserId(await getCurrentUserId());
+    };
+    
+    fetchCurrentUserId();
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    // Fetch user details
+    const fetchUserDetails = async () => {
       try {
-        const conversations = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setConversations(conversations);
-        setLoading(false);
-        console.log('Fetched conversations:', conversations);
+        const q = query(collection(FIRESTORE_DB, 'chats'));
+
+        const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+          try {
+            const conversations = querySnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+
+            // Collect all unique user IDs
+            const userIds = new Set();
+            conversations.forEach(conv => {
+              if (conv.senderId) userIds.add(conv.senderId);
+              if (conv.receiverId) userIds.add(conv.receiverId);
+            });
+
+            // Fetch user details
+            const userDetailsMap = {};
+            for (const userId of userIds) {
+              const userRef = doc(FIRESTORE_DB, 'users', userId);
+              const userSnap = await getDoc(userRef);
+              if (userSnap.exists()) {
+                userDetailsMap[userId] = { ...userSnap.data(), _id: userId };
+              }
+            }
+
+            setUserDetails(userDetailsMap);
+            setConversations(conversations);
+            setLoading(false);
+          } catch (error) {
+            console.error("Error fetching conversations or user details: ", error);
+            setError("Failed to load conversations.");
+            setLoading(false);
+          }
+        });
+
+        return () => unsubscribe();
       } catch (error) {
-        console.error("Error fetching conversations: ", error);
-        setError("Failed to load conversations.");
+        console.error("Error fetching user details: ", error);
+        setError("Failed to load user details.");
         setLoading(false);
       }
-    }, (error) => {
-      console.error("Snapshot error: ", error);
-      setError("Failed to load conversations.");
-      setLoading(false);
-    });
+    };
 
-    return () => unsubscribe();
+    fetchUserDetails();
   }, []);
 
   const navigateToChat = (conversation) => {
+    if (!conversation.senderId || !conversation.receiverId) {
+      console.warn('Invalid conversation data:', conversation);
+      return;
+    }
+
     navigation.navigate('ChatRoom', {
       conversation: {
         id: conversation.id,
         senderId: conversation.senderId,
         receiverId: conversation.receiverId,
-        senderName: conversation.senderName,
-        receiverName: conversation.receiverName,
+        senderName: userDetails[conversation.senderId]?.name || 'Unknown Sender',
+        receiverName: userDetails[conversation.receiverId]?.name || 'Unknown Receiver',
         lastMessage: conversation.lastMessage,
         unreadCount: conversation.unreadCount,
         messages: conversation.messages,
@@ -52,21 +89,26 @@ const MainChatScreen = ({ navigation }) => {
     });
   };
 
-  const navigateToUserSelection = () => {
-    navigation.navigate('UserSelectionScreen');
-  };
+  const renderItem = ({ item }) => {
+    if (!item.senderId || !item.receiverId) {
+      console.warn('Invalid item data:', item);
+      return null;
+    }
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.itemContainer} onPress={() => navigateToChat(item)}>
-      <Text style={styles.userName}>{item.receiverName || 'No Name'}</Text>
-      <Text style={styles.lastMessage}>{item.lastMessage || 'No Messages'}</Text>
-      {item.unreadCount > 0 && (
-        <View style={styles.unreadBadge}>
-          <Text style={styles.unreadText}>{item.unreadCount}</Text>
-        </View>
-      )}
-    </TouchableOpacity>
-  );
+    const displayName = currentUserId === item.receiverId ? userDetails[item.senderId]?.name : userDetails[item.receiverId]?.name;
+
+    return (
+      <TouchableOpacity style={styles.itemContainer} onPress={() => navigateToChat(item)}>
+        <Text style={styles.userName}>{displayName || 'No Name'}</Text>
+        <Text style={styles.lastMessage}>{item.lastMessage || 'No Messages'}</Text>
+        {item.unreadCount > 0 && (
+          <View style={styles.unreadBadge}>
+            <Text style={styles.unreadText}>{item.unreadCount}</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   if (loading) {
     return (
@@ -87,7 +129,7 @@ const MainChatScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Button title="Start Chat" onPress={navigateToUserSelection} />
+      <Button title="Start Chat" onPress={() => navigation.navigate('UserSelectionScreen')} />
       <FlatList
         data={conversations}
         renderItem={renderItem}
