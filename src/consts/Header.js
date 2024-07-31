@@ -1,4 +1,3 @@
-// Header.js
 import React, { useContext, useEffect, useState } from 'react';
 import { View, TouchableOpacity, Image, StyleSheet, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -9,7 +8,8 @@ import { doc, getDoc } from 'firebase/firestore';
 
 const Header = () => {
     const { user, profileType, switchProfileType } = useContext(UserContext);
-    const [profilePhotoURL, setProfilePhotoURL] = useState('');
+    const [profilePhotoURL, setProfilePhotoURL] = useState('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQv_oL1l60gN7zHc_fMS11OeFR-mLDi3DgjNg&s');
+    const [imageLoadError, setImageLoadError] = useState(false);
     const navigation = useNavigation();
 
     useEffect(() => {
@@ -70,9 +70,9 @@ const Header = () => {
                 onPress={() => navigation.navigate('UserProfile')}
             >
                 <Image
-                    source={{ uri: profilePhotoURL }}
+                    source={{ uri: imageLoadError ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQv_oL1l60gN7zHc_fMS11OeFR-mLDi3DgjNg&s' : profilePhotoURL }}
                     style={styles.profileImage}
-                    onError={() => console.log('Error loading image')} // Debugging image load error
+                    onError={() => setImageLoadError(true)} // Set error state on image load failure
                 />
             </TouchableOpacity>
         </View>

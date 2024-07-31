@@ -76,15 +76,7 @@ const ProfileScreen = () => {
     };
   }, []);
 
-  const handleDeleteListing = async (id) => {
-    try {
-      await deleteDoc(doc(FIRESTORE_DB, 'rentals', id));
-      Alert.alert('Success', 'Listing deleted successfully!');
-    } catch (error) {
-      console.error('Error deleting listing:', error);
-      Alert.alert('Error', 'Failed to delete listing.');
-    }
-  };
+
 
   const handleModifyListing = (item) => {
     navigation.navigate('EditListing', { item });
@@ -95,11 +87,11 @@ const ProfileScreen = () => {
   };
 
   const handleViewPaymentHistory = () => {
-    navigation.navigate('PaymentHistoryScreen', { paymentHistory });
+    navigation.navigate('PaymentHistory', { paymentHistory });
   };
 
   const handleViewReviews = () => {
-    navigation.navigate('ReviewsScreen', { reviews });
+    navigation.navigate('ReviewsAndRatingsScreen', { reviews });
   };
 
   const handleSupport = () => {
@@ -107,31 +99,15 @@ const ProfileScreen = () => {
   };
 
   const getBlobFromUri = async (uri) => {
-    try {
-      const response = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-      const blob = await new Blob([response], { type: 'image/jpeg' });
-      return blob;
-    } catch (error) {
-      console.error('Error converting URI to blob:', error);
-      throw error;
-    }
+    const response = await fetch(uri);
+    const blob = await response.blob();
+    return blob;
   };
+  
 
   const uploadProfileImage = async (uri) => {
     try {
-      let blob;
-      if (uri.startsWith('file://')) {
-        blob = await getBlobFromUri(uri);
-      } else {
-        const response = await fetch(uri);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
-        }
-        blob = await response.blob();
-      }
-
+      const blob = await getBlobFromUri(uri);
       const storageRef = ref(storage, `profilePictures/${userProfile.uid}`);
       await uploadBytes(storageRef, blob);
       const downloadURL = await getDownloadURL(storageRef);
@@ -139,14 +115,10 @@ const ProfileScreen = () => {
       return downloadURL;
     } catch (error) {
       console.error('Error during image upload:', error);
-      if (error.code === 'storage/unknown') {
-        console.error('Firebase Storage Error:', error.message);
-      } else {
-        console.error('Network Error:', error.message);
-      }
       throw error;
     }
   };
+
 
   const handleImageUpload = async () => {
     try {
@@ -194,6 +166,7 @@ const ProfileScreen = () => {
       Alert.alert('Error', 'Failed to update profile image.');
     }
   };
+  
 
   const renderProfileSection = () => (
     <View style={styles.profileContainer}>

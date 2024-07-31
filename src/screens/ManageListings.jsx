@@ -90,6 +90,9 @@ const ManageListings = ({ navigation }) => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
       <StatusBar translucent={false} backgroundColor="#fff" barStyle="dark-content" />
+      <View style={styles.headerContainer}>
+        <Text style={styles.headerText}>Manage Your Listings</Text>
+      </View>
       <SearchBar
         placeholder="Search Listings..."
         onChangeText={handleSearch}
@@ -178,6 +181,16 @@ const ManageListings = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
+  },
+  headerContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#fff',
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
   },
   searchBarContainer: {
     backgroundColor: 'transparent',
@@ -271,21 +284,25 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   actionButton: {
-    flex: 1,
-    alignItems: 'center',
-    padding: 10,
+    backgroundColor: '#00ADEF',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 5,
-    margin: 5,
-    backgroundColor: '#1e90ff',
   },
   deleteButton: {
-    backgroundColor: '#dc143c',
+    backgroundColor: 'red',
   },
   actionButtonText: {
     color: '#fff',
     fontWeight: 'bold',
+    textAlign: 'center',
   },
- 
+  fab: {
+    position: 'absolute',
+    margin: 16,
+    right: 0,
+    bottom: 0,
+  },
 });
 
 export default ManageListings;

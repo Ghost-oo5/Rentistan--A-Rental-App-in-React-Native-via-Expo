@@ -15,6 +15,7 @@ import { UserContext } from './UserContext';
 import Header from './src/consts/Header';
 import Home from './src/screens/Home';
 import * as Notifications from 'expo-notifications'; // Import Notifications from expo-notifications
+import ManageBookings from './src/screens/ManageBookings';
 
 const Tab = createBottomTabNavigator();
 
@@ -26,7 +27,7 @@ function RenterTabs() {
           let iconName;
           switch (route.name) {
             case 'Home':
-              iconName = 'home';
+              iconName = 'event';
               break;
             case 'Chat':
               iconName = 'chat';
@@ -38,7 +39,7 @@ function RenterTabs() {
               iconName = 'favorite';
               break;
             default:
-              iconName = 'home';
+              iconName = 'event';
           }
           return <MaterialIcons name={iconName} size={size} color={color} />;
         },
@@ -46,11 +47,11 @@ function RenterTabs() {
         tabBarInactiveTintColor: 'gray',
       })}
     >
-      <Tab.Screen name="Home" component={RenterDashboard} options={{ header: () => <Header /> }} />
+      <Tab.Screen name="Manage Listings" component={ManageListings} options={{ header: () => <Header /> }} />
       <Tab.Screen name="Chat" component={MainChatScreen} />
-      <Tab.Screen name="Notifications" component={NotificationsScreen} />
+      {/* <Tab.Screen name="Notifications" component={NotificationsScreen} /> */}
       <Tab.Screen name="Favorites" component={FavoritesScreen} />
-      <Tab.Screen name="ListingDetails" component={ListingDetails} />
+      <Tab.Screen name="Manage Bookings" component={ManageBookings} />
     </Tab.Navigator>
   );
 }

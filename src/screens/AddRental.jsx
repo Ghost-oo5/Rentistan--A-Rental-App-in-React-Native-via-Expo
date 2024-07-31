@@ -1,8 +1,7 @@
-// src/screens/AddRental.jsx
 import React, { useState, useContext } from 'react';
 import { View, TextInput, StyleSheet, Alert, Image, ScrollView, TouchableOpacity, Text, Modal } from 'react-native';
 import { FIRESTORE_DB } from '../../FirebaseConfig';
-import { collection, addDoc, Timestamp } from 'firebase/firestore'; // Import Timestamp
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import * as ImagePicker from 'expo-image-picker';
 import { UserContext } from '../../UserContext';
@@ -18,7 +17,7 @@ const AddRental = ({ navigation }) => {
   const [washroom, setWashroom] = useState('');
   const [size, setSize] = useState('');
   const [area, setArea] = useState('');
-  const [availability, setAvailability] = useState('Available'); // Set default availability
+  const [availability, setAvailability] = useState('Available');
   const [modalVisible, setModalVisible] = useState(false);
   const { user } = useContext(UserContext);
 
@@ -47,16 +46,14 @@ const AddRental = ({ navigation }) => {
           washroom,
           size,
           area,
-          availability, // Add availability to the rental data
-          postedBy: user?.id || 'Anonymous',
-          postedByName: user?.name || 'Anonymous', // Include the user's name here
-          timestamp: Timestamp.now() // Add timestamp to the rental data
+          availability,
+          postedBy: user?.uid || 'Anonymous', // Ensure user.uid is used
+          postedByName: user?.displayName || 'Anonymous', // Ensure user.displayName is used
+          timestamp: Timestamp.now(),
         };
 
-        // Add the rental listing to Firestore
         await addDoc(collection(FIRESTORE_DB, 'rentals'), rentalData);
 
-        // Trigger notification
         await Notifications.scheduleNotificationAsync({
           content: {
             title: 'New Listing Added',
@@ -66,8 +63,8 @@ const AddRental = ({ navigation }) => {
         });
 
         Alert.alert('Success', 'Rental listing added successfully!');
-        console.log('Success', 'Rental listing added successfully!');
-        alert('Success', 'Rental listing added successfully!');
+        console.log('Successfully added rental listing: ');
+
         navigation.goBack();
       } catch (error) {
         console.error('Error adding rental listing: ', error);
@@ -87,7 +84,7 @@ const AddRental = ({ navigation }) => {
         setImages([...images, ...selectedImages]);
       }
     } else {
-      Alert.alert("Permission needed", "You need to grant permission to access the library.");
+      Alert.alert('Permission needed', 'You need to grant permission to access the library.');
     }
   };
 
@@ -156,7 +153,7 @@ const AddRental = ({ navigation }) => {
       />
 
       <TouchableOpacity style={styles.pickerButton} onPress={() => setModalVisible(true)}>
-        <Text style={styles.pickerText}>{availability}</Text> 
+        <Text style={styles.pickerText}>{availability}</Text>
       </TouchableOpacity>
 
       <Modal
@@ -199,45 +196,35 @@ const styles = StyleSheet.create({
   imageContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    marginBottom: 12,
   },
   imagePreview: {
     width: 100,
     height: 100,
-    margin: 5,
+    marginRight: 8,
+    marginBottom: 8,
   },
   uploadButton: {
-    backgroundColor: '#28A745',
-    padding: 15,
-    borderRadius: 10,
+    backgroundColor: '#00ADEF',
+    padding: 12,
+    borderRadius: 8,
     alignItems: 'center',
     marginBottom: 12,
   },
-  addButton: {
-    backgroundColor: '#00ADEF',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 30,
-  },
   buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  pickerText: {
-    color: 'black',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: '#fff',
   },
   pickerButton: {
-    borderWidth: 1,
-    borderColor: '#ccc',
+    backgroundColor: '#fff',
+    padding: 12,
     borderRadius: 8,
-    padding: 10,
-    marginBottom: 16,
+    borderColor: '#00ADEF',
+    borderWidth: 1,
     alignItems: 'center',
-    backgroundColor: '#fafafa',
+    marginBottom: 12,
+  },
+  pickerText: {
+    color: '#00ADEF',
   },
   modalContainer: {
     flex: 1,
@@ -247,17 +234,23 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: '#fff',
-    borderRadius: 10,
     padding: 20,
+    borderRadius: 8,
     width: '80%',
   },
   modalItem: {
-    padding: 15,
+    padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
   },
   modalItemText: {
     fontSize: 16,
+  },
+  addButton: {
+    backgroundColor: '#00ADEF',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
   },
 });
 

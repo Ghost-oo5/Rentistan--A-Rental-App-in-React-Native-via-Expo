@@ -58,41 +58,41 @@ const Home = ({ navigation }) => {
   }, []);
 
   useEffect(() => {
-    let updatedRentals = rentals;
-
-    if (search !== '') {
-      updatedRentals = updatedRentals.filter((item) =>
-        item.title.toLowerCase().includes(search.toLowerCase()) ||
-        item.userName.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-
-    updatedRentals = updatedRentals.filter(item => {
-      const price = parseFloat(item.price) || 0;
-      const rooms = parseFloat(item.rooms) || 0;
-
-      return price >= sliderValues[0] && price <= sliderValues[1] &&
-        (rooms >= selectedRooms[0] && rooms <= selectedRooms[1]);
+    const fetchUserData = async (userId) => {
+      const userDoc = await getDoc(doc(FIRESTORE_DB, 'users', userId));
+      if (userDoc.exists()) {
+        return userDoc.data();
+      } else {
+        console.error(`User not found for ID: ${userId}`);
+        return { name: 'Unknown User' };
+      }
+    };
+  
+    const unsubscribe = onSnapshot(collection(FIRESTORE_DB, 'rentals'), async (snapshot) => {
+      const rentalList = [];
+      const userMap = {};
+      for (const docSnapshot of snapshot.docs) {
+        const rentalData = { id: docSnapshot.id, ...docSnapshot.data() };
+        console.log('Rental Data:', rentalData);
+        if (!userMap[rentalData.postedBy]) {
+          const userData = await fetchUserData(rentalData.postedBy);
+          userMap[rentalData.postedBy] = userData;
+        }
+        rentalData.userName = userMap[rentalData.postedBy]?.name || 'Loading...';
+        rentalList.push(rentalData);
+      }
+      console.log('Rental List:', rentalList);
+      setRentals(rentalList);
+      setUsers(userMap);
+      setFilteredRentals(rentalList);
+    }, (error) => {
+      console.error('Error fetching rentals: ', error);
     });
-
-    if (sortOption === 'Price Low to High') {
-      updatedRentals = updatedRentals.sort((a, b) => {
-        const priceA = parseFloat(a.price) || 0;
-        const priceB = parseFloat(b.price) || 0;
-        return priceA - priceB;
-      });
-    } else if (sortOption === 'Price High to Low') {
-      updatedRentals = updatedRentals.sort((a, b) => {
-        const priceA = parseFloat(a.price) || 0;
-        const priceB = parseFloat(b.price) || 0;
-        return priceB - priceA;
-      });
-    } else if (sortOption === 'Newest First') {
-      updatedRentals = updatedRentals.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    }
-
-    setFilteredRentals(updatedRentals);
-  }, [search, rentals, sliderValues, selectedRooms, sortOption]);
+  
+    return () => unsubscribe();
+  }, []);
+  
+  
 
   const handleDetailsPress = (item) => {
     navigation.navigate('ListingDetails', { item });

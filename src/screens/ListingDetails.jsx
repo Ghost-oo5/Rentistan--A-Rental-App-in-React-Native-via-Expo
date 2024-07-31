@@ -94,13 +94,20 @@ const ListingDetails = ({ route, navigation }) => {
     fetchUserData();
   }, [item.postedBy, item.id]);
 
-  const handleChatClick = () => {
-    const conversation = {
-      id: item.postedBy,
-      userName: userProfile.name,
-    };
-    navigation.navigate('ChatRoom', { conversation });
+  const handleChatClick = async () => {
+    const user = FIREBASE_Auth.currentUser;
+    if (user) {
+      const conversation = {
+        senderId: user.uid,
+        receiverId: item.postedBy,
+        userName: userProfile.name,
+      };
+      navigation.navigate('ChatRoom', { conversation });
+    } else {
+      alert('Please log in to start a chat');
+    }
   };
+    
   
 
   const handleCallClick = () => {

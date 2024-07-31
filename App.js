@@ -26,7 +26,8 @@ import FavoriteScreen from './src/screens/FavoriteScreen';
 import TenantProfile from './src/screens/TenantProfile';
 import ChatRoom from './src/screens/ChatRoom';
 import UserSelectionScreen from './src/screens/UserSelectionScreen';
-import BookingRequestsScreen from './src/screens/BookingRequestsScreen';
+import ManageBookings from './src/screens/ManageBookings';
+import PaymentHistory from './src/screens/PaymentHistory';
 
 
 const Stack = createStackNavigator();
@@ -52,7 +53,8 @@ function MainNavigator() {
       <Stack.Screen name="TenantProfile" component={TenantProfile} options={{ title: 'TenantProfile' }} />
       <Stack.Screen name="ChatRoom" component={ChatRoom} options={{ title: 'ChatRoom' }} />
       <Stack.Screen name="UserSelectionScreen" component={UserSelectionScreen} options={{ title: 'UserSelectionScreen' }} />
-      <Stack.Screen name="BookingRequests" component={BookingRequestsScreen} />
+      <Stack.Screen name="BookingRequests" component={ManageBookings} />
+      <Stack.Screen name="PaymentHistory" component={PaymentHistory} />
 
     </Stack.Navigator>
   );

@@ -20,6 +20,10 @@ const NotificationScreen = () => {
           id: doc.id,
           ...doc.data(),
         }));
+
+        // Debug: log the fetched notifications
+        console.log('Fetched notifications:', fetchedNotifications);
+
         setNotifications(fetchedNotifications);
       } catch (error) {
         console.error('Error fetching notifications: ', error);

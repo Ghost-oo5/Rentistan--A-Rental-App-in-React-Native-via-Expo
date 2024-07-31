@@ -16,7 +16,7 @@ const ChatRoom = ({ route, navigation }) => {
   const [lastNotifiedMessageId, setLastNotifiedMessageId] = useState('');
   const [showBookingRequest, setShowBookingRequest] = useState(false);
   const [bookingRequestMessage, setBookingRequestMessage] = useState('');
-  
+
   const auth = FIREBASE_Auth;
   const user = auth.currentUser;
   const senderId = user?.uid;
@@ -38,7 +38,7 @@ const ChatRoom = ({ route, navigation }) => {
 
       const partnerId = senderId === conversation.senderId ? conversation.receiverId : conversation.senderId;
       setConversationPartner(userDetailsMap[partnerId] || { name: 'Unknown', photoURL: null, _id: partnerId });
-      
+
     } catch (error) {
       console.error("Error fetching user details: ", error);
       setError("Failed to load user details.");
@@ -150,7 +150,7 @@ const ChatRoom = ({ route, navigation }) => {
         message: bookingRequestMessage,
         createdAt: new Date(),
       };
-  
+
       await addDoc(collection(FIRESTORE_DB, 'bookingRequests'), bookingRequest);
       alert('Booking request sent successfully!');
       setBookingRequestMessage('');
@@ -263,10 +263,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
-    paddingTop: 40,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    backgroundColor: '#fff',
+    backgroundColor: '#00ADEF',
   },
   profilePicture: {
     width: 40,
@@ -277,78 +274,82 @@ const styles = StyleSheet.create({
   receiverName: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#fff',
   },
   messageList: {
     flex: 1,
-    padding: 10,
+    paddingHorizontal: 10,
   },
   messageBubble: {
     padding: 10,
+    borderRadius: 10,
     marginVertical: 5,
-    borderRadius: 15,
+    maxWidth: '80%',
   },
   userBubble: {
     backgroundColor: '#DCF8C6',
     alignSelf: 'flex-end',
-    borderBottomRightRadius: 0,
   },
   agentBubble: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
     alignSelf: 'flex-start',
-    borderBottomLeftRadius: 0,
   },
   messageText: {
     fontSize: 16,
   },
   messageTime: {
     fontSize: 12,
-    color: '#666',
-    marginTop: 5,
+    color: '#888',
+    alignSelf: 'flex-end',
   },
   inputContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
     padding: 10,
     borderTopWidth: 1,
-    borderTopColor: '#ccc',
-    backgroundColor: '#fff',
-  },
-  optionsButton: {
-    marginRight: 10,
-  },
-  optionsButtonText: {
-    fontSize: 24,
-    color: '#888',
+    borderColor: '#ddd',
+    alignItems: 'center',
   },
   input: {
     flex: 1,
     padding: 10,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#ddd',
     borderRadius: 20,
-    marginRight: 10,
+    backgroundColor: '#fff',
   },
   sendButton: {
-    backgroundColor: '#00ADEF',
+    marginLeft: 10,
     paddingVertical: 10,
     paddingHorizontal: 20,
+    backgroundColor: '#00ADEF',
     borderRadius: 20,
   },
   sendButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  optionsButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    backgroundColor: '#00ADEF',
+    borderRadius: 20,
+    marginRight: 5,
+  },
+  optionsButtonText: {
+    color: '#fff',
+    fontSize: 20,
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
     width: '80%',
     backgroundColor: '#fff',
-    borderRadius: 8,
     padding: 20,
+    borderRadius: 10,
     alignItems: 'center',
   },
   modalTitle: {
@@ -358,26 +359,25 @@ const styles = StyleSheet.create({
   },
   modalInput: {
     width: '100%',
+    padding: 10,
     borderWidth: 1,
     borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 10,
+    borderRadius: 10,
     marginBottom: 10,
   },
   modalButton: {
-    backgroundColor: '#00ADEF',
     padding: 10,
-    borderRadius: 8,
+    backgroundColor: '#00ADEF',
+    borderRadius: 10,
     marginVertical: 5,
   },
   modalButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontSize: 16,
   },
   errorText: {
     color: 'red',
     textAlign: 'center',
-    marginTop: 20,
   },
 });
 

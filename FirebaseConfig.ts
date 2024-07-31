@@ -8,13 +8,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAnalytics } from 'firebase/analytics'; // Import for analytics
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCsTEeEMLQlKJxsGTaZUA6RbS3ebfMG7c0",
-  authDomain: "rentistan-react-native-app.firebaseapp.com",
-  projectId: "rentistan-react-native-app",
-  storageBucket: "rentistan-react-native-app.appspot.com",
-  messagingSenderId: "555430383847",
-  appId: "1:555430383847:web:dff9b7e3d074e975e8d242",
-  measurementId: "G-CD040CLPW6"
+  apiKey: "AIzaSyB8HRXKThDHvEDd9-tz-iORol4X21Pod0I",
+  authDomain: "rentistan-fyp-react-native.firebaseapp.com",
+  databaseURL: "https://rentistan-fyp-react-native-default-rtdb.firebaseio.com",
+  projectId: "rentistan-fyp-react-native",
+  storageBucket: "rentistan-fyp-react-native.appspot.com",
+  messagingSenderId: "698955533443",
+  appId: "1:698955533443:web:4f12344bd8f9c562471fb6",
+  measurementId: "G-N6J0FEZF86"
 };
 
 // Initialize Firebase

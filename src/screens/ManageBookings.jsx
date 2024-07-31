@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, FlatList, StyleSheet, SafeAreaView } from
 import { collection, query, where, onSnapshot, updateDoc, doc, deleteDoc, getDocs, getDoc } from 'firebase/firestore';
 import { FIRESTORE_DB, FIREBASE_Auth } from '../../FirebaseConfig';
 
-const BookingRequestsScreen = () => {
+const ManageBookings = ({ navigation }) => {
   const [bookingRequests, setBookingRequests] = useState([]);
   const [error, setError] = useState('');
 
@@ -76,11 +76,18 @@ const BookingRequestsScreen = () => {
     }
   };
 
+  const handleViewUserProfile = (userId) => {
+    console.log('Navigating to ViewUserProfile with userId:', userId);
+    navigation.navigate('ViewUserProfile', { userId });
+  };
+
   const renderItem = ({ item }) => (
     <View style={styles.requestContainer}>
-      <Text>Requester: {item.requesterName}</Text>
-      <Text>Message: {item.message}</Text>
-      <Text>Status: {item.status}</Text>
+      <TouchableOpacity onPress={() => handleViewUserProfile(item.requesterId)}>
+        <Text style={styles.requesterText}>Requester: {item.requesterName}</Text>
+      </TouchableOpacity>
+      <Text style={styles.messageText}>Message: {item.message}</Text>
+      <Text style={styles.statusText}>Status: {item.status}</Text>
       {item.status === 'pending' && (
         <View style={styles.buttonContainer}>
           <TouchableOpacity
@@ -122,38 +129,68 @@ const BookingRequestsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: 10,
+    backgroundColor: '#f8f8f8',
   },
   requestContainer: {
     padding: 16,
     marginBottom: 8,
     borderRadius: 8,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#fff',
     borderColor: '#ddd',
     borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  requesterText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textDecorationLine: 'underline',
+    // color: 'blue',
+  },
+  messageText: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 8,
+  },
+  statusText: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 8,
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
   },
   acceptButton: {
     backgroundColor: '#00ADEF',
     padding: 10,
     borderRadius: 5,
+    flex: 1,
+    alignItems: 'center',
+    marginRight: 5,
   },
   rejectButton: {
     backgroundColor: '#FF4D4D',
     padding: 10,
     borderRadius: 5,
+    flex: 1,
+    alignItems: 'center',
+    marginLeft: 5,
   },
   buttonText: {
     color: '#fff',
+    fontWeight: 'bold',
   },
   errorText: {
     color: 'red',
     textAlign: 'center',
+    fontSize: 16,
   },
 });
 
-export default BookingRequestsScreen;
+export default ManageBookings;

@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, FlatList, StyleSheet, SafeAreaView } from
 import { FIRESTORE_DB } from '../../FirebaseConfig';
 import { collection, query, onSnapshot, updateDoc, doc } from 'firebase/firestore';
 
-const BookingRequestsScreen = () => {
+const ManageBookings = () => {
   const [bookingRequests, setBookingRequests] = useState([]);
   const [error, setError] = useState('');
 
@@ -125,4 +125,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BookingRequestsScreen;
+export default ManageBookings;
