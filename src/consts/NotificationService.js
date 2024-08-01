@@ -107,7 +107,29 @@
       console.log('Error sending notification to all users:', error);
     }
   }
-
+  export async function sendNotificationToUser(userId, title, body) {
+    try {
+      const pushTokenDoc = doc(FIRESTORE_DB, 'pushTokens', userId);
+      const pushTokenSnap = await getDoc(pushTokenDoc);
+      if (pushTokenSnap.exists()) {
+        const token = pushTokenSnap.data().expoPushToken;
+        if (token) {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: title,
+              body: body,
+            },
+            trigger: null,
+            to: token,
+          });
+          console.log('Notification sent to:', token);
+        }
+      }
+    } catch (error) {
+      console.log('Error sending notification:', error);
+    }
+  }
+  
   export async function saveNotificationToFirestore(type, message, userId, additionalData) {
     // Extract values if 'type' is an object
     if (typeof type === 'object') {

@@ -1,4 +1,3 @@
-// src/screens/UserSelectionScreen.jsx
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { FIRESTORE_DB, FIREBASE_Auth } from '../../FirebaseConfig';
@@ -12,12 +11,20 @@ const UserSelectionScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
+        console.log('Fetching users from Firestore...');
         const querySnapshot = await getDocs(collection(FIRESTORE_DB, 'users'));
-        const usersList = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setUsers(usersList);
+        
+        if (querySnapshot.empty) {
+          console.log('No users found in Firestore');
+        } else {
+          const usersList = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          console.log('Fetched users:', usersList);
+          setUsers(usersList);
+        }
+        
         setLoading(false);
       } catch (error) {
         console.error("Error fetching users: ", error);
@@ -68,7 +75,6 @@ const UserSelectionScreen = ({ navigation }) => {
       console.error("Error starting conversation: ", error);
     }
   };
-  
 
   if (loading) {
     return (

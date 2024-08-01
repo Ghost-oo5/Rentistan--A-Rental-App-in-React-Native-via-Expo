@@ -16,6 +16,7 @@ import Header from './src/consts/Header';
 import Home from './src/screens/Home';
 import * as Notifications from 'expo-notifications'; // Import Notifications from expo-notifications
 import ManageBookings from './src/screens/ManageBookings';
+import TenantBookingRequests from './src/screens/TenantBookingRequests';
 
 const Tab = createBottomTabNavigator();
 
@@ -87,7 +88,7 @@ function TenantTabs() {
       <Tab.Screen name="Home" component={Home} options={{ header: () => <Header /> }} />
       <Tab.Screen name="Chat" component={MainChatScreen} />
       <Tab.Screen name="Favorites" component={FavoritesScreen} />
-      <Tab.Screen name="ManageBookings" component={BookingManagement} />
+      <Tab.Screen name="Booking Requests" component={TenantBookingRequests} />
     </Tab.Navigator>
   );
 }

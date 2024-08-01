@@ -28,7 +28,10 @@ import ChatRoom from './src/screens/ChatRoom';
 import UserSelectionScreen from './src/screens/UserSelectionScreen';
 import ManageBookings from './src/screens/ManageBookings';
 import PaymentHistory from './src/screens/PaymentHistory';
-
+import SubmitPaymentProof from './src/screens/SubmitPaymentProof';
+import TenantBookingRequests from './src/screens/TenantBookingRequests';
+import ReviewPaymentProof from './src/screens/ReviewPaymentProof';
+import AddReview from './src/screens/AddReview';
 
 const Stack = createStackNavigator();
 
@@ -53,8 +56,12 @@ function MainNavigator() {
       <Stack.Screen name="TenantProfile" component={TenantProfile} options={{ title: 'TenantProfile' }} />
       <Stack.Screen name="ChatRoom" component={ChatRoom} options={{ title: 'ChatRoom' }} />
       <Stack.Screen name="UserSelectionScreen" component={UserSelectionScreen} options={{ title: 'UserSelectionScreen' }} />
-      <Stack.Screen name="BookingRequests" component={ManageBookings} />
+      <Stack.Screen name="ManageBookings" component={ManageBookings} />
       <Stack.Screen name="PaymentHistory" component={PaymentHistory} />
+      <Stack.Screen name="SubmitPaymentProof" component={SubmitPaymentProof} />
+      <Stack.Screen name="TenantBookingRequests" component={TenantBookingRequests} />
+      <Stack.Screen name="ReviewPaymentProof" component={ReviewPaymentProof} />
+      <Stack.Screen name="AddReview" component={AddReview} />
 
     </Stack.Navigator>
   );

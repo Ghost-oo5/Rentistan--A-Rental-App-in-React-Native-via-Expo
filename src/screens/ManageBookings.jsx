@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, ActivityIndicator } from 'react-native';
 import { collection, query, where, onSnapshot, updateDoc, doc, deleteDoc, getDocs, getDoc } from 'firebase/firestore';
 import { FIRESTORE_DB, FIREBASE_Auth } from '../../FirebaseConfig';
 
 const ManageBookings = ({ navigation }) => {
   const [bookingRequests, setBookingRequests] = useState([]);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
 
   const user = FIREBASE_Auth.currentUser;
   const userId = user?.uid;
@@ -13,6 +14,7 @@ const ManageBookings = ({ navigation }) => {
   useEffect(() => {
     if (!userId) {
       setError('User not authenticated');
+      setLoading(false);
       return;
     }
 
@@ -30,13 +32,16 @@ const ManageBookings = ({ navigation }) => {
           };
         }));
         setBookingRequests(requests);
+        setLoading(false);
       } catch (error) {
         console.error("Error fetching booking requests: ", error);
         setError("Failed to load booking requests.");
+        setLoading(false);
       }
     }, (error) => {
       console.error("Snapshot error: ", error);
       setError("Failed to load booking requests.");
+      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -81,6 +86,34 @@ const ManageBookings = ({ navigation }) => {
     navigation.navigate('ViewUserProfile', { userId });
   };
 
+  const handleSubmitPaymentProof = (requestId) => {
+    navigation.navigate('ReviewPaymentProof', { requestId, onPaymentProofReviewed: refreshRequests });
+  };
+
+  const handleAddReview = (requestId) => {
+    navigation.navigate('AddReview', { requestId });
+  };
+
+  const refreshRequests = async () => {
+    try {
+      const q = query(collection(FIRESTORE_DB, 'bookingRequests'), where('recipientId', '==', userId));
+      const querySnapshot = await getDocs(q);
+      const requests = await Promise.all(querySnapshot.docs.map(async (docSnap) => {
+        const requestData = docSnap.data();
+        const userDoc = await getDoc(doc(FIRESTORE_DB, 'users', requestData.requesterId));
+        return {
+          id: docSnap.id,
+          ...requestData,
+          requesterName: userDoc.exists() ? userDoc.data().name : 'Unknown',
+        };
+      }));
+      setBookingRequests(requests);
+    } catch (error) {
+      console.error("Error refreshing booking requests: ", error);
+      setError("Failed to refresh booking requests.");
+    }
+  };
+
   const renderItem = ({ item }) => (
     <View style={styles.requestContainer}>
       <TouchableOpacity onPress={() => handleViewUserProfile(item.requesterId)}>
@@ -104,8 +137,24 @@ const ManageBookings = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       )}
+      {item.status === 'accepted' && (
+        <TouchableOpacity
+          style={styles.paymentProofButton}
+          onPress={() => item.legitProofs ? handleAddReview(item.id) : handleSubmitPaymentProof(item.id)}
+        >
+          <Text style={styles.buttonText}>{item.legitProofs ? 'Add Review' : 'Payment Proof'}</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator size="large" color="#00ADEF" />
+      </SafeAreaView>
+    );
+  }
 
   if (error) {
     return (
@@ -150,7 +199,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 8,
     textDecorationLine: 'underline',
-    // color: 'blue',
   },
   messageText: {
     fontSize: 16,
@@ -181,6 +229,13 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     marginLeft: 5,
+  },
+  paymentProofButton: {
+    backgroundColor: '#00ADEF',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 8,
   },
   buttonText: {
     color: '#fff',

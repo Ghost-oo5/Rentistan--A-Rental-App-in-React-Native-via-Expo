@@ -143,23 +143,34 @@ const ChatRoom = ({ route, navigation }) => {
 
   const sendBookingRequest = async () => {
     try {
+      const recipientId = senderId === conversation.senderId ? conversation.receiverId : conversation.senderId;
       const bookingRequest = {
         requesterId: senderId,
-        recipientId: senderId === conversation.senderId ? conversation.receiverId : conversation.senderId,
+        recipientId: recipientId,
         status: 'pending',
         message: bookingRequestMessage,
         createdAt: new Date(),
       };
-
-      await addDoc(collection(FIRESTORE_DB, 'bookingRequests'), bookingRequest);
+  
+      console.log('Booking request to be sent:', bookingRequest);
+  
+      // Add booking request to bookingRequests collection
+      const docRef1 = await addDoc(collection(FIRESTORE_DB, 'bookingRequests'), bookingRequest);
+      console.log('Booking request added to bookingRequests with ID:', docRef1.id);
+  
+      // Add booking request to tenantBookingRequests collection
+      const docRef2 = await addDoc(collection(FIRESTORE_DB, 'tenantBookingRequests'), bookingRequest);
+      console.log('Booking request added to tenantBookingRequests with ID:', docRef2.id);
+  
       alert('Booking request sent successfully!');
       setBookingRequestMessage('');
       setShowBookingRequest(false);
     } catch (error) {
-      console.error("Error sending booking request: ", error);
-      setError("Failed to send booking request.");
+      console.error("Error sending booking request: ", error.message);
+      setError(`Failed to send booking request: ${error.message}`);
     }
   };
+  
 
   const renderItem = ({ item }) => (
     <View style={[styles.messageBubble, item.user._id === senderId ? styles.userBubble : styles.agentBubble]}>
