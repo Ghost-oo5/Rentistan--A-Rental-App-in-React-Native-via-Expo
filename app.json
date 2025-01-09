@@ -14,12 +14,14 @@
     },
     "ios": {
       "supportsTablet": true,
+      "newArchEnabled": true,
       "bundleIdentifier": "com.abdulbasit.FYPpractice", 
       "infoPlist": {
         "UIBackgroundModes": ["fetch", "remote-notification"] 
       }
     },
     "android": {
+      "newArchEnabled": true,
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/Rentistan-logo.png",
         "backgroundColor": "#ffffff"
